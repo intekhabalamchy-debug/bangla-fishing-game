@@ -6,12 +6,30 @@ export class MinigameController {
     this.game = game;
   }
 
+  cancelAllTimers() {
+    const { borshi, jhal, pollo } = this.game.state;
+    if (borshi) {
+      if (borshi.flightTimer) { clearTimeout(borshi.flightTimer); borshi.flightTimer = null; }
+      if (borshi.biteTimer) { clearTimeout(borshi.biteTimer); borshi.biteTimer = null; }
+      if (borshi.hookWindow) { clearTimeout(borshi.hookWindow); borshi.hookWindow = null; }
+    }
+    if (jhal) {
+      if (jhal.expandInterval) { clearInterval(jhal.expandInterval); jhal.expandInterval = null; }
+      if (jhal.catchTimeout) { clearTimeout(jhal.catchTimeout); jhal.catchTimeout = null; }
+    }
+    if (pollo) {
+      if (pollo.grabWindow) { clearTimeout(pollo.grabWindow); pollo.grabWindow = null; }
+      if (pollo.emptyTimeout) { clearTimeout(pollo.emptyTimeout); pollo.emptyTimeout = null; }
+    }
+  }
+
   // ==========================================
   // 1. BORSHI (Rod & Hook) Mechanics
   // ==========================================
   startBorshiCast() {
     const { borshi } = this.game.state;
     if (borshi.state !== 'idle') return;
+    this.cancelAllTimers();
     borshi.state = 'charging';
     borshi.charge = 0;
     borshi.chargeDir = 1;
@@ -28,7 +46,9 @@ export class MinigameController {
     borshi.targetBobberY = this.game.height * (0.50 + Math.random() * 0.32);
 
     // Animate line throwing
-    setTimeout(() => {
+    borshi.flightTimer = setTimeout(() => {
+      borshi.flightTimer = null;
+      if (this.game.isPaused || borshi.state !== 'in_flight') return;
       borshi.bobberX = borshi.targetBobberX;
       borshi.bobberY = borshi.targetBobberY;
       borshi.state = 'cast';
@@ -42,9 +62,9 @@ export class MinigameController {
       const waitTime = baseWait / ((baitData ? baitData.catchMultiplier : 1.0) * dolphinMult);
 
       borshi.biteTimer = setTimeout(() => {
-        if (borshi.state === 'cast') {
-          this.triggerBorshiNibble();
-        }
+        borshi.biteTimer = null;
+        if (this.game.isPaused || borshi.state !== 'cast') return;
+        this.triggerBorshiNibble();
       }, waitTime);
     }, 380);
   }
@@ -60,6 +80,8 @@ export class MinigameController {
 
     // Player has window to hook
     borshi.hookWindow = setTimeout(() => {
+      borshi.hookWindow = null;
+      if (this.game.isPaused) return;
       if (borshi.state === 'nibble') {
         // Missed bite
         this.game.showToast('মাছ টোপ খেয়ে পালিয়ে গেছে! (Fish ate bait & escaped)');
@@ -71,7 +93,10 @@ export class MinigameController {
   hookBorshi() {
     const { borshi } = this.game.state;
     if (borshi.state === 'nibble') {
-      clearTimeout(borshi.hookWindow);
+      if (borshi.hookWindow) {
+        clearTimeout(borshi.hookWindow);
+        borshi.hookWindow = null;
+      }
       sound.playSplash(true);
       this.game.particles.addSplash(borshi.bobberX, borshi.bobberY, 16);
 
@@ -177,10 +202,14 @@ export class MinigameController {
     jhal.maxRadius = netTier;
 
     // Expand net radius animation
-    const expandInterval = setInterval(() => {
+    jhal.expandInterval = setInterval(() => {
+      if (this.game.isPaused) return;
       jhal.radius += 5;
       if (jhal.radius >= jhal.maxRadius) {
-        clearInterval(expandInterval);
+        clearInterval(jhal.expandInterval);
+        jhal.expandInterval = null;
+        if (jhal.state !== 'throwing') return;
+
         sound.playSplash(true);
         this.game.particles.addSplash(jhal.x, jhal.y, 22);
 
@@ -198,7 +227,9 @@ export class MinigameController {
           }
         }
 
-        setTimeout(() => {
+        jhal.catchTimeout = setTimeout(() => {
+          jhal.catchTimeout = null;
+          if (this.game.isPaused || jhal.state !== 'throwing') return;
           if (caughtList.length > 0) {
             this.game.onCatchMultipleFish(caughtList);
           } else {
@@ -248,6 +279,8 @@ export class MinigameController {
       this.game.showToast(`পলোতে ঝাপট মারছে! ${caughtFish.nameBn} ভেতরে! দ্রুত হাত দিন!`, 'success');
       // Window to grab
       pollo.grabWindow = setTimeout(() => {
+        pollo.grabWindow = null;
+        if (this.game.isPaused) return;
         if (pollo.state === 'trapped') {
           this.game.showToast('মাছ পলোর তলা দিয়ে পিছলে কাদার ভেতর পালাল! (Fish slipped under mud!)', 'warning');
           pollo.state = 'wading';
@@ -255,8 +288,12 @@ export class MinigameController {
       }, 3500);
     } else {
       this.game.showToast('পলো ফাঁকা! কাদায় মাছ ছিল না (Empty basket! Only mud)');
-      setTimeout(() => {
-        pollo.state = 'wading';
+      pollo.emptyTimeout = setTimeout(() => {
+        pollo.emptyTimeout = null;
+        if (this.game.isPaused) return;
+        if (pollo.state === 'trapped') {
+          pollo.state = 'wading';
+        }
       }, 1000);
     }
   }

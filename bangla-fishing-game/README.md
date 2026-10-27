@@ -63,8 +63,8 @@
 
 | Action | Desktop Controls | Mobile / Touch Controls |
 | :--- | :--- | :--- |
-| **Cast / Hook / Reel / Throw Net / Grab** | `Spacebar` or `Left Click` | Dynamic Action Button (`🔘`) |
-| **Aim Net / Wade in Mud** | `W`, `A`, `S`, `D` or `Arrow Keys` | Virtual D-Pad (`▲` `▼` `◀` `▶`) |
+| **Cast / Hook / Reel / Throw Net / Grab** | `Spacebar` or `Left Click` | Dynamic Action Button (`🔘`) or Direct Tap on Water |
+| **Aim Net / Wade in Mud** | `W`, `A`, `S`, `D` or `Arrow Keys` | Virtual D-Pad (`▲` `▼` `◀` `▶`) or Drag on River |
 | **Switch to Rod (Borshi)** | `1` | Tap Tool Dock 🎣 |
 | **Switch to Net (Khep Jhal)** | `2` | Tap Tool Dock 🕸️ |
 | **Switch to Basket (Pollo)** | `3` | Tap Tool Dock 🧺 |

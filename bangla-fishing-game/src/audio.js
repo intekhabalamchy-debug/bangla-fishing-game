@@ -117,15 +117,21 @@ class SoundEngine {
     this.ensureContext();
     const now = this.ctx.currentTime;
     const dur = isHeavy ? 0.35 : 0.18;
-    const bufferSize = this.ctx.sampleRate * dur;
-    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.4));
+    const key = isHeavy ? 'heavy' : 'light';
+
+    if (!this.splashBuffers) this.splashBuffers = {};
+    if (!this.splashBuffers[key]) {
+      const bufferSize = Math.floor(this.ctx.sampleRate * dur);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.4));
+      }
+      this.splashBuffers[key] = buffer;
     }
 
     const noise = this.ctx.createBufferSource();
-    noise.buffer = buffer;
+    noise.buffer = this.splashBuffers[key];
 
     const filter = this.ctx.createBiquadFilter();
     filter.type = 'lowpass';

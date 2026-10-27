@@ -193,7 +193,7 @@ export class ParticleSystem {
     for (const m of this.mudClouds) {
       ctx.beginPath();
       ctx.arc(m.x, m.y, m.radius, 0, Math.PI * 2);
-      ctx.fillStyle = m.color + m.alpha + ')';
+      ctx.fillStyle = m.color + Math.max(0, m.alpha) + ')';
       ctx.fill();
     }
 

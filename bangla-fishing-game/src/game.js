@@ -5,6 +5,7 @@ import { ParticleSystem } from './particles.js';
 import { GameRenderer } from './renderer.js';
 import { MinigameController } from './minigames.js';
 import { getFishSpriteDataUrl } from './fishSprites.js';
+import { StartMenuBg } from './startMenuBg.js';
 
 export class Game {
   constructor() {
@@ -17,6 +18,7 @@ export class Game {
     this.particles = new ParticleSystem();
     this.renderer = new GameRenderer(this.canvas);
     this.minigames = new MinigameController(this);
+    this.startMenuBg = new StartMenuBg('startMenuBgCanvas');
 
     // Saveable Game State
     this.state = {
@@ -125,11 +127,107 @@ export class Game {
     this.initFishPool();
     this.bindInputs();
     this.bindUi();
+    this.isStartMenuOpen = true;
     this.setupWeatherCycle();
     this.updateHud();
+    this.setupStartMenu();
 
     // Start Main Loop
     requestAnimationFrame((t) => this.loop(t));
+  }
+
+  // ==========================================
+  // ==========================================
+  // Riverine Fishing Start Menu Controller
+  // ==========================================
+  setupStartMenu() {
+    this.isStartMenuOpen = true;
+    const startMenu = document.getElementById('startMenuScreen');
+    if (!startMenu) return;
+
+    // Start panoramic moving river background simulation
+    this.startMenuBg?.start();
+
+    const playBtn = document.getElementById('startPlayBtn');
+    const soundBtn = document.getElementById('startSoundToggleBtn');
+    const radioBtn = document.getElementById('startRadioNextBtn');
+    const touchBtn = document.getElementById('startTouchSwitchBtn');
+    const helpBtn = document.getElementById('startHelpGuideBtn');
+    const rulesToggle = document.getElementById('startRulesToggle');
+    const rulesCard = document.getElementById('startRulesCard');
+    const disclaimerBtn = document.getElementById('startDisclaimerBtn');
+
+    playBtn?.addEventListener('click', () => {
+      this.closeStartMenu();
+    });
+
+    rulesToggle?.addEventListener('click', () => {
+      if (rulesCard) {
+        rulesCard.classList.toggle('collapsed');
+        sound.playUiClick();
+      }
+    });
+
+    disclaimerBtn?.addEventListener('click', () => {
+      sound.playUiClick();
+      this.showToast('📜 ডিসক্লেইমার: নদীমাতৃক গ্রাম বাংলার ঐতিহ্যবাহী মাছ ধরার সংস্কৃতি ও দেশি মাছ সংরক্ষণে এক শৈল্পিক প্রয়াস।', 4000);
+    });
+
+    soundBtn?.addEventListener('click', () => {
+      const isMuted = sound.toggleMute();
+      const icon = document.getElementById('startSoundIcon');
+      const label = document.getElementById('startSoundLabel');
+      if (icon) icon.textContent = isMuted ? '🔇' : '🔊';
+      if (label) label.textContent = isMuted ? 'সাউন্ড: বন্ধ' : 'সাউন্ড: চালু';
+      this.showToast(isMuted ? 'সাউন্ড মিউট করা হয়েছে (Sound Muted)' : 'সাউন্ড চালু করা হয়েছে (Sound On)');
+    });
+
+    radioBtn?.addEventListener('click', () => {
+      const track = sound.nextRadioTrack();
+      const songLabel = document.getElementById('startRadioSongName');
+      const inGameRadioLabel = document.getElementById('radioTrackName');
+      if (songLabel) songLabel.textContent = track.nameBn;
+      if (inGameRadioLabel) inGameRadioLabel.textContent = track.nameBn;
+      this.showToast(`রেডিও স্টেশন: ${track.nameBn}`);
+    });
+
+    touchBtn?.addEventListener('click', () => {
+      const touchContainer = document.getElementById('touchControlsContainer');
+      if (touchContainer) {
+        const isHidden = touchContainer.classList.toggle('hidden');
+        this.showToast(isHidden ? 'টাচ কন্ট্রোল লুকানো হয়েছে (Touch Hidden)' : 'টাচ কন্ট্রোল দেখানো হয়েছে (Touch Visible)');
+      }
+    });
+
+    helpBtn?.addEventListener('click', () => {
+      this.openModal('helpModal');
+    });
+  }
+
+  closeStartMenu() {
+    this.isStartMenuOpen = false;
+    sound.ensureContext();
+    sound.playSplash(true);
+    sound.playUiClick();
+    sound.startMusic();
+
+    // Pause the start menu background to free up 100% resources for gameplay
+    this.startMenuBg?.stop();
+
+    const startMenu = document.getElementById('startMenuScreen');
+    if (startMenu) {
+      startMenu.classList.add('fade-out');
+    }
+  }
+
+  openStartMenu() {
+    this.isStartMenuOpen = true;
+    this.startMenuBg?.start();
+
+    const startMenu = document.getElementById('startMenuScreen');
+    if (startMenu) {
+      startMenu.classList.remove('fade-out');
+    }
   }
 
   // ==========================================
@@ -806,11 +904,62 @@ export class Game {
     // Desktop Keyboard
     window.addEventListener('keydown', (e) => {
       sound.ensureContext();
+
+      // If Start Menu is open, Space or Enter begins the game
+      if (this.isStartMenuOpen) {
+        if (e.code === 'Space' || e.code === 'Enter') {
+          e.preventDefault();
+          this.closeStartMenu();
+        }
+        return;
+      }
+
+      // Check if hub dropdown is open, Escape closes it
+      const hubMenu = document.getElementById('villageHubMenu');
+      if (hubMenu && !hubMenu.classList.contains('hidden') && e.code === 'Escape') {
+        e.preventDefault();
+        hubMenu.classList.add('hidden');
+        document.getElementById('hubArrow')?.classList.remove('open');
+        document.getElementById('villageHubBtn')?.setAttribute('aria-expanded', 'false');
+        return;
+      }
+
+      // Check if any modal is currently visible
+      const activeModal = document.querySelector('.modal-backdrop:not(.hidden)');
+      if (activeModal) {
+        // If Pause Modal is active, allow Resume via P or Escape
+        if (activeModal.id === 'pauseModal') {
+          if (e.code === 'KeyP' || e.code === 'Escape') {
+            e.preventDefault();
+            this.togglePause(false);
+          }
+        } else if (e.code === 'Escape') {
+          e.preventDefault();
+          this.closeModal(activeModal);
+        } else if (e.code === 'KeyM') {
+          e.preventDefault();
+          this.openModal('marketModal');
+        } else if (e.code === 'KeyE') {
+          e.preventDefault();
+          this.openModal('albumModal');
+        } else if (e.code === 'KeyG') {
+          e.preventDefault();
+          this.openModal('shopModal');
+        } else if (e.code === 'KeyT') {
+          e.preventDefault();
+          this.openModal('achievementsModal');
+        }
+        // Block all other gameplay keys while ANY modal is open
+        return;
+      }
+
       this.keys[e.code] = true;
 
       if (e.code === 'Space') {
         e.preventDefault();
         this.handlePrimaryActionDown();
+      } else if (e.code === 'KeyQ') {
+        this.cycleTool();
       } else if (e.code === 'Digit1') {
         this.switchTool('borshi');
       } else if (e.code === 'Digit2') {
@@ -827,17 +976,13 @@ export class Game {
         this.openModal('achievementsModal');
       } else if (e.code === 'KeyR') {
         this.switchRadioTrack();
+      } else if (e.code === 'KeyF') {
+        this.toggleFullscreen();
       } else if (e.code === 'KeyH' || e.key === '?') {
         this.openModal('helpModal');
-      } else if (e.code === 'KeyP') {
-        this.togglePause();
-      } else if (e.code === 'Escape') {
-        const activeModal = document.querySelector('.modal-backdrop:not(.hidden)');
-        if (activeModal) {
-          this.closeModal(activeModal);
-        } else {
-          this.togglePause();
-        }
+      } else if (e.code === 'KeyP' || e.code === 'Escape') {
+        e.preventDefault();
+        this.togglePause(true);
       }
     });
 
@@ -845,25 +990,52 @@ export class Game {
       this.keys[e.code] = false;
       if (e.code === 'Space') {
         e.preventDefault();
-        this.handlePrimaryActionUp();
+        if (!this.isPaused && !this.isStartMenuOpen) {
+          this.handlePrimaryActionUp();
+        }
       }
     });
 
+    // Accurate coordinate helper supporting object-fit: contain
+    this.getCanvasCoords = (clientX, clientY) => {
+      const rect = this.canvas.getBoundingClientRect();
+      const canvasRatio = this.canvas.width / this.canvas.height;
+      const elemRatio = rect.width / rect.height;
+
+      let renderWidth = rect.width;
+      let renderHeight = rect.height;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      if (elemRatio > canvasRatio) {
+        renderHeight = rect.height;
+        renderWidth = renderHeight * canvasRatio;
+        offsetX = (rect.width - renderWidth) / 2;
+      } else {
+        renderWidth = rect.width;
+        renderHeight = renderWidth / canvasRatio;
+        offsetY = (rect.height - renderHeight) / 2;
+      }
+
+      const relativeX = clientX - rect.left - offsetX;
+      const relativeY = clientY - rect.top - offsetY;
+      const x = Math.max(0, Math.min(this.canvas.width, (relativeX / renderWidth) * this.canvas.width));
+      const y = Math.max(0, Math.min(this.canvas.height, (relativeY / renderHeight) * this.canvas.height));
+      return { x, y };
+    };
+
     // Desktop Mouse / Pointer Controls
     this.canvas.addEventListener('mousedown', (e) => {
+      if (this.isStartMenuOpen || this.isPaused) return;
       sound.ensureContext();
-      const rect = this.canvas.getBoundingClientRect();
-      const scaleX = this.canvas.width / rect.width;
-      const scaleY = this.canvas.height / rect.height;
-      const clickX = (e.clientX - rect.left) * scaleX;
-      const clickY = (e.clientY - rect.top) * scaleY;
+      const { x, y } = this.getCanvasCoords(e.clientX, e.clientY);
 
       if (this.state.currentTool === 'jhal') {
-        this.state.jhal.targetX = clickX;
-        this.state.jhal.targetY = clickY;
+        this.state.jhal.targetX = x;
+        this.state.jhal.targetY = y;
       } else if (this.state.currentTool === 'pollo' && this.state.pollo.state === 'wading') {
-        this.state.pollo.playerX = clickX;
-        this.state.pollo.playerY = Math.max(260, Math.min(this.height - 80, clickY));
+        this.state.pollo.playerX = x;
+        this.state.pollo.playerY = Math.max(260, Math.min(this.height - 80, y));
       }
 
       this.handlePrimaryActionDown();
@@ -873,8 +1045,94 @@ export class Game {
       this.handlePrimaryActionUp();
     });
 
+    // Mobile Direct Canvas Touch Controls (Aim, Cast, Grab)
+    this.canvas.addEventListener('touchstart', (e) => {
+      if (this.isStartMenuOpen || this.isPaused) return;
+      sound.ensureContext();
+      if (e.touches && e.touches.length > 0) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const { x, y } = this.getCanvasCoords(touch.clientX, touch.clientY);
+
+        if (this.state.currentTool === 'jhal') {
+          this.state.jhal.targetX = x;
+          this.state.jhal.targetY = y;
+        } else if (this.state.currentTool === 'pollo' && this.state.pollo.state === 'wading') {
+          this.state.pollo.playerX = x;
+          this.state.pollo.playerY = Math.max(260, Math.min(this.height - 80, y));
+        }
+
+        this.handlePrimaryActionDown();
+      }
+    }, { passive: false });
+
+    this.canvas.addEventListener('touchmove', (e) => {
+      if (this.isStartMenuOpen || this.isPaused) return;
+      if (e.touches && e.touches.length > 0) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const { x, y } = this.getCanvasCoords(touch.clientX, touch.clientY);
+
+        if (this.state.currentTool === 'jhal') {
+          this.state.jhal.targetX = x;
+          this.state.jhal.targetY = y;
+        } else if (this.state.currentTool === 'pollo' && this.state.pollo.state === 'wading') {
+          this.state.pollo.playerX = x;
+          this.state.pollo.playerY = Math.max(260, Math.min(this.height - 80, y));
+        }
+      }
+    }, { passive: false });
+
+    this.canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      this.handlePrimaryActionUp();
+    }, { passive: false });
+
+    this.canvas.addEventListener('touchcancel', () => {
+      this.handlePrimaryActionUp();
+    });
+
+    // Unlock Web Audio context on any first user touch gesture (iOS Safari requirement)
+    const unlockMobileAudio = () => {
+      sound.ensureContext();
+      window.removeEventListener('touchstart', unlockMobileAudio);
+      window.removeEventListener('touchend', unlockMobileAudio);
+    };
+    window.addEventListener('touchstart', unlockMobileAudio, { passive: true });
+    window.addEventListener('touchend', unlockMobileAudio, { passive: true });
+
     // Touch / Mobile Controls Setup
     this.setupTouchControls();
+    this.setupMobileOrientationHint();
+  }
+
+  setupMobileOrientationHint() {
+    const hintEl = document.getElementById('mobileOrientationHint');
+    const dismissBtn = document.getElementById('dismissOrientationHint');
+    let userDismissed = false;
+
+    const checkOrientation = () => {
+      if (!hintEl || userDismissed) return;
+      const isMobile = window.innerWidth <= 768 || 'ontouchstart' in window;
+      const isPortrait = window.innerHeight > window.innerWidth;
+      if (isMobile && isPortrait) {
+        hintEl.classList.remove('hidden');
+      } else {
+        hintEl.classList.add('hidden');
+      }
+    };
+
+    dismissBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      userDismissed = true;
+      hintEl?.classList.add('hidden');
+    });
+
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(checkOrientation, 200);
+    });
+    checkOrientation();
   }
 
   setupTouchControls() {
@@ -886,15 +1144,26 @@ export class Game {
 
     const bindTouch = (el, code) => {
       if (!el) return;
-      el.addEventListener('touchstart', (e) => {
+      const onDown = (e) => {
         e.preventDefault();
         sound.ensureContext();
         this.keys[code] = true;
-      });
-      el.addEventListener('touchend', (e) => {
-        e.preventDefault();
+        el.classList.add('active');
+      };
+      const onUp = (e) => {
+        if (e.cancelable) e.preventDefault();
         this.keys[code] = false;
-      });
+        el.classList.remove('active');
+      };
+
+      el.addEventListener('touchstart', onDown, { passive: false });
+      el.addEventListener('touchend', onUp, { passive: false });
+      el.addEventListener('touchcancel', onUp, { passive: false });
+
+      // Pointer event fallbacks
+      el.addEventListener('pointerdown', onDown);
+      el.addEventListener('pointerup', onUp);
+      el.addEventListener('pointercancel', onUp);
     };
 
     bindTouch(dpadUp, 'ArrowUp');
@@ -903,28 +1172,39 @@ export class Game {
     bindTouch(dpadRight, 'ArrowRight');
 
     if (actionBtn) {
-      actionBtn.addEventListener('touchstart', (e) => {
+      const onActionDown = (e) => {
         e.preventDefault();
         sound.ensureContext();
+        actionBtn.classList.add('pressed');
         this.handlePrimaryActionDown();
-      });
-      actionBtn.addEventListener('touchend', (e) => {
-        e.preventDefault();
+      };
+      const onActionUp = (e) => {
+        if (e.cancelable) e.preventDefault();
+        actionBtn.classList.remove('pressed');
         this.handlePrimaryActionUp();
-      });
+      };
+
+      actionBtn.addEventListener('touchstart', onActionDown, { passive: false });
+      actionBtn.addEventListener('touchend', onActionUp, { passive: false });
+      actionBtn.addEventListener('touchcancel', onActionUp, { passive: false });
+
+      actionBtn.addEventListener('pointerdown', onActionDown);
+      actionBtn.addEventListener('pointerup', onActionUp);
+      actionBtn.addEventListener('pointercancel', onActionUp);
     }
 
     // Auto-detect mobile touch environment
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     const touchContainer = document.getElementById('touchControlsContainer');
     if (touchContainer) {
-      if (isTouchDevice || window.innerWidth < 840) {
+      if (isTouchDevice || window.innerWidth <= 960) {
         touchContainer.classList.remove('hidden');
       }
     }
   }
 
   handlePrimaryActionDown() {
+    if (this.isPaused || this.isStartMenuOpen) return;
     const { currentTool } = this.state;
     if (currentTool === 'borshi') {
       const bState = this.state.borshi.state;
@@ -952,6 +1232,7 @@ export class Game {
   }
 
   handlePrimaryActionUp() {
+    if (this.isPaused || this.isStartMenuOpen) return;
     const { currentTool } = this.state;
     if (currentTool === 'borshi') {
       const bState = this.state.borshi.state;
@@ -968,12 +1249,27 @@ export class Game {
     this.updateActionButtonLabel();
   }
 
+  cycleTool() {
+    sound.ensureContext();
+    const allowed = this.state.location.allowedTools || ['borshi', 'jhal'];
+    const toolOrder = ['borshi', 'jhal', 'pollo'];
+    const available = toolOrder.filter((t) => allowed.includes(t));
+    if (available.length === 0) return;
+
+    const currentIndex = available.indexOf(this.state.currentTool);
+    const nextIndex = (currentIndex + 1) % available.length;
+    const nextTool = available[nextIndex];
+
+    this.switchTool(nextTool);
+  }
+
   switchTool(toolId) {
     // Check if tool is allowed in current location
     if (!this.state.location.allowedTools.includes(toolId)) {
       this.showToast(`এই স্থানে ${toolId.toUpperCase()} ব্যবহার করা যায় না! (Not allowed here)`);
       return;
     }
+    this.minigames.cancelAllTimers();
     this.state.currentTool = toolId;
     sound.playUiClick();
 
@@ -986,11 +1282,40 @@ export class Game {
       this.state.pollo.playerY = this.height * 0.65;
     }
 
-    document.querySelectorAll('.tool-btn').forEach((btn) => {
-      btn.classList.toggle('active', btn.dataset.tool === toolId);
-    });
-
+    this.updateToolDock();
     this.updateActionButtonLabel();
+  }
+
+  updateToolDock() {
+    const { currentTool } = this.state;
+    const info = {
+      borshi: { icon: '🎣', name: 'ছিপ (Borshi Rod)', hint: 'টোপ ফেলে বড়শি শিকার • [১]' },
+      jhal: { icon: '🕸️', name: 'খেপ জাল (Cast Net)', hint: 'ঝাঁকে জাল নিক্ষেপ • [২]' },
+      pollo: { icon: '🧺', name: 'পলো (Bamboo Basket)', hint: 'কাদায় পলো চাপা শিকার • [৩]' }
+    }[currentTool] || { icon: '🎣', name: 'ছিপ (Borshi Rod)', hint: 'টোপ ফেলে বড়শি শিকার • [১]' };
+
+    const iconEl = document.getElementById('toolCycleIcon');
+    const nameEl = document.getElementById('toolCycleName');
+    const hintEl = document.getElementById('toolCycleHint');
+    const btn = document.getElementById('toolCycleBtn');
+
+    if (iconEl) iconEl.textContent = info.icon;
+    if (nameEl) nameEl.textContent = info.name;
+    if (hintEl) hintEl.textContent = info.hint;
+
+    if (btn) {
+      btn.className = `tool-cycle-btn tool-${currentTool}`;
+      btn.dataset.tool = currentTool;
+    }
+
+    // Update active pips & check allowedTools for current location
+    const allowed = this.state.location.allowedTools || ['borshi', 'jhal'];
+    document.querySelectorAll('.tool-pip').forEach((pip) => {
+      const pTool = pip.dataset.tool;
+      const isAllowed = allowed.includes(pTool);
+      pip.classList.toggle('active', pTool === currentTool);
+      pip.classList.toggle('disabled', !isAllowed);
+    });
   }
 
   updateActionButtonLabel() {
@@ -1022,10 +1347,17 @@ export class Game {
   // HUD, Modals & UI Binding
   // ==========================================
   bindUi() {
-    // Tool buttons
-    document.querySelectorAll('.tool-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        this.switchTool(btn.dataset.tool);
+    // Single 1-Click Tool Cycle Button
+    const toolCycleBtn = document.getElementById('toolCycleBtn');
+    toolCycleBtn?.addEventListener('click', () => {
+      this.cycleTool();
+    });
+
+    // Individual pips inside the button for direct 1-click select
+    document.querySelectorAll('.tool-pip').forEach((pip) => {
+      pip.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.switchTool(pip.dataset.tool);
       });
     });
 
@@ -1045,6 +1377,52 @@ export class Game {
         this.saveState();
       });
     }
+
+    // 4-in-1 Combined Village Hub (Market, Album, Shop, Achievements)
+    const hubBtn = document.getElementById('villageHubBtn');
+    const hubMenu = document.getElementById('villageHubMenu');
+    const hubArrow = document.getElementById('hubArrow');
+
+    const toggleHubMenu = (forceState) => {
+      if (!hubMenu) return;
+      const willOpen = forceState !== undefined ? forceState : hubMenu.classList.contains('hidden');
+      if (willOpen) {
+        hubMenu.classList.remove('hidden');
+        hubArrow?.classList.add('open');
+        hubBtn?.setAttribute('aria-expanded', 'true');
+      } else {
+        hubMenu.classList.add('hidden');
+        hubArrow?.classList.remove('open');
+        hubBtn?.setAttribute('aria-expanded', 'false');
+      }
+    };
+
+    hubBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sound.ensureContext();
+      sound.playUiClick();
+      toggleHubMenu();
+    });
+
+    // Dismiss hub dropdown when clicking anywhere outside
+    document.addEventListener('click', (e) => {
+      if (hubMenu && !hubMenu.classList.contains('hidden')) {
+        const wrapper = document.getElementById('hubDropdownWrapper');
+        if (wrapper && !wrapper.contains(e.target)) {
+          toggleHubMenu(false);
+        }
+      }
+    });
+
+    // Modal Hub Tabs (direct switching inside modals)
+    document.querySelectorAll('.modal-hub-tab').forEach((tabBtn) => {
+      tabBtn.addEventListener('click', () => {
+        const targetModal = tabBtn.getAttribute('data-modal');
+        if (targetModal) {
+          this.openModal(targetModal);
+        }
+      });
+    });
 
     // Modal Triggers
     document.getElementById('openMarketBtn')?.addEventListener('click', () => this.openModal('marketModal'));
@@ -1080,13 +1458,23 @@ export class Game {
       });
     });
 
-    // Close modal when clicking on the dark backdrop area
+    // Close modal when clicking on the dark backdrop area (except pauseModal which requires explicit resume)
     document.querySelectorAll('.modal-backdrop').forEach((backdrop) => {
       backdrop.addEventListener('click', (e) => {
         if (e.target === backdrop) {
+          if (backdrop.id === 'pauseModal') {
+            // Keep paused! Do not dismiss pause menu on background click - stays paused until clicking Resume
+            return;
+          }
           this.closeModal(backdrop);
         }
       });
+    });
+
+    // Start menu open from pause modal
+    document.getElementById('openStartMenuFromPauseBtn')?.addEventListener('click', () => {
+      this.togglePause(false);
+      this.openStartMenu();
     });
 
     // Market actions
@@ -1096,6 +1484,23 @@ export class Game {
     document.getElementById('closeTrophyBtn')?.addEventListener('click', () => {
       this.closeModal(document.getElementById('trophyModal'));
     });
+
+    // Fullscreen toggle button
+    document.getElementById('fullscreenToggleBtn')?.addEventListener('click', () => {
+      this.toggleFullscreen();
+    });
+  }
+
+  toggleFullscreen() {
+    sound.ensureContext();
+    sound.playUiClick();
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+      this.showToast('⛶ পূর্ণপর্দা মোড চালু (Fullscreen On)');
+    } else {
+      document.exitFullscreen().catch(() => {});
+      this.showToast('পূর্ণপর্দা মোড বন্ধ (Fullscreen Off)');
+    }
   }
 
   togglePause(forceState) {
@@ -1132,10 +1537,7 @@ export class Game {
     const loc = LOCATIONS[locKey.toUpperCase()];
     if (!loc) return;
 
-    if (loc.id === 'padma' && !this.state.upgrades.boatUnlocked) {
-      // Boat not strictly required to visit shore ghat, but boat unlocks deep river
-    }
-
+    this.minigames.cancelAllTimers();
     this.state.location = loc;
     sound.playUiClick();
     this.initFishPool();
@@ -1194,6 +1596,20 @@ export class Game {
         dolphinBuffEl.classList.add('hidden');
       }
     }
+
+    // Keep dropdown selectors synchronized with internal state
+    const locSelect = document.getElementById('locationSelect');
+    if (locSelect && locSelect.value !== this.state.location.id) {
+      locSelect.value = this.state.location.id;
+    }
+
+    const baitSelect = document.getElementById('baitSelect');
+    if (baitSelect && baitSelect.value !== this.state.selectedBait) {
+      baitSelect.value = this.state.selectedBait;
+    }
+
+    // Update tool button & cycle dock status based on location rules
+    this.updateToolDock();
   }
 
   renderMinigameOverlays() {
@@ -1220,6 +1636,8 @@ export class Game {
         if (staminaFill) {
           const pct = Math.max(0, (borshi.fishStamina / borshi.fishMaxStamina) * 100);
           staminaFill.style.width = `${pct}%`;
+          const percentEl = document.getElementById('staminaPercent');
+          if (percentEl) percentEl.textContent = `${Math.round(pct)}%`;
         }
       }
       if (staminaContainer) staminaContainer.classList.remove('hidden');
@@ -1273,8 +1691,28 @@ export class Game {
     const modal = document.getElementById(modalId);
     if (!modal) return;
 
-    // Auto-pause game while browsing Market, Album, or Shop
+    // Auto-pause game while browsing Market, Album, Shop, or Achievements
     this.isPaused = true;
+
+    // Dismiss hub dropdown if open
+    const hubMenu = document.getElementById('villageHubMenu');
+    if (hubMenu) {
+      hubMenu.classList.add('hidden');
+      document.getElementById('hubArrow')?.classList.remove('open');
+      document.getElementById('villageHubBtn')?.setAttribute('aria-expanded', 'false');
+    }
+
+    // Hide any other active modals when switching directly
+    document.querySelectorAll('.modal-backdrop:not(.hidden)').forEach((m) => {
+      if (m.id !== modalId && m.id !== 'pauseModal') {
+        m.classList.add('hidden');
+      }
+    });
+
+    // Update active tab highlight across modal-hub-tabs
+    document.querySelectorAll('.modal-hub-tab').forEach((tab) => {
+      tab.classList.toggle('active', tab.dataset.modal === modalId);
+    });
 
     if (modalId === 'marketModal') this.renderMarketModal();
     if (modalId === 'albumModal') this.renderAlbumModal();

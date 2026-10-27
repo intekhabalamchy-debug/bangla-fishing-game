@@ -2,80 +2,267 @@
 <html lang="bn">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="মৎস্য শিকারী">
+  <meta name="theme-color" content="#021a15">
+  <meta name="format-detection" content="telephone=no">
   <title>মৎস্য শিকারী: Bangla Pond & River Fisher</title>
   <meta name="description" content="Authentic Bangladeshi retro 16-bit pond and river fishing game featuring Borshi, Khep Jhal, and Pollo across Village Pukur, Haor, and Padma River.">
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
-  <!-- Top App Navigation & Controls -->
-  <header class="app-header">
-    <div class="brand-container">
-      <div class="brand-icon">🐟</div>
-      <div class="brand-title-wrap">
-        <div class="brand-title">
-          <span class="bangla-title">মৎস্য শিকারী</span>
-          <span id="playerEquippedTitleBadge" class="equipped-title-badge">গ্রামের শিকারী</span>
+  <!-- =========================================================
+       Traditional Bengali River & Pond Angler Start Menu
+       ========================================================= -->
+  <div id="startMenuScreen" class="start-menu-overlay">
+    <!-- Living Animated Panoramic River Canvas Background -->
+    <canvas id="startMenuBgCanvas" class="start-menu-bg-canvas" aria-hidden="true"></canvas>
+
+    <div class="start-menu-container">
+      
+      <!-- Top Title Group, Taglines, CTA & Rules Card -->
+      <div class="start-main-card">
+        <!-- Traditional River Wave & Lotus Motif -->
+        <div class="start-river-wave-motif" aria-hidden="true"></div>
+
+        <!-- Title & Subtitle Badge -->
+        <div class="start-title-area">
+          <div class="start-top-badge">
+            <span class="badge-dot">≈</span>
+            <span class="badge-text">নদীমাতৃক বাংলাদেশ • ঐতিহ্যবাহী মৎস্য শিকার</span>
+            <span class="badge-dot">≈</span>
+          </div>
+          <h1 class="start-title">মৎস্য শিকারী</h1>
+          <div class="start-title-sub">B A N G L A &nbsp; R I V E R &nbsp; A N G L E R</div>
         </div>
-        <div class="brand-subtitle-line">
-          <span class="game-sub-title">Bangla Fisher</span>
-          <span class="brand-dot">•</span>
-          <a href="../../index.html" class="creator-badge-link" title="Created by Intekhab Alam Chowdhury • View Portfolio">
-            <span class="by-tag">by</span> <span class="creator-name-tag">Intekhab Alam Chowdhury</span>
-          </a>
+
+        <!-- Taglines -->
+        <div class="start-tagline-wrap">
+          <h2 class="start-tagline">ভাটিয়ালি সুর, শান্ত নদী আর রূপালি মাছের ঝাঁক</h2>
+          <p class="start-desc">
+            পদ্মার উত্তাল মোহনা, বিল-হাওড়ের শান্ত জল কিংবা সুন্দরবনের গহীনে—বাঁশের ছিপ, সুতি খেপ জাল ও পলো নিয়ে গ্রাম বাংলার চিরায়ত শিকারের স্বাদ নিন।
+          </p>
         </div>
+
+        <!-- River Emerald 3D CTA Button -->
+        <div class="start-cta-row">
+          <button id="startPlayBtn" class="start-cta-btn" aria-label="Start Fishing Journey">
+            <span class="btn-wave-gleam" aria-hidden="true"></span>
+            <span>🎣 নদীতে নামেন</span>
+          </button>
+          <div class="start-shortcut-hint">
+            <kbd>Space</kbd> বা <kbd>Enter</kbd> চেপে নামুন
+          </div>
+        </div>
+
+        <!-- Collapsible / Floating "কীভাবে শিকার করবেন" (Rules Card) -->
+        <div class="start-rules-card" id="startRulesCard">
+          <div class="start-fringe" aria-hidden="true"></div>
+          <div class="rules-card-header" id="startRulesToggle" role="button" tabindex="0" title="ক্লিক করে নিয়মাবলী লুকান বা দেখান">
+            <span class="rules-title">কীভাবে শিকার করবেন <span id="rulesChevron" class="rules-chevron">⌃</span></span>
+            <span class="rules-sub">৩টি সনাতন শিকার পদ্ধতি</span>
+          </div>
+
+          <div id="rulesCardBody" class="rules-card-body">
+            <div class="rules-grid">
+              <div class="rule-box">
+                <div class="rule-ic rod-ic">🎣</div>
+                <div class="rule-info">
+                  <strong>বাঁশের ছিপ ও বড়শি (Bamboo Rod)</strong>
+                  <span>পাওয়ার মেপে পানিতে ফেলুন। টোপে মাছ টানলে গ্রিন জোনে ব্যালান্স রেখে রিল টানুন।</span>
+                </div>
+              </div>
+
+              <div class="rule-box">
+                <div class="rule-ic net-ic">🕸️</div>
+                <div class="rule-info">
+                  <strong>সুতি খেপ জাল (Cotton Cast Net)</strong>
+                  <span>মাছের ঝাঁকে নিশানা তাক করে জাল ছুড়ে এক নিক্ষেপেই একঝাঁক মাছ তুলে আনুন।</span>
+                </div>
+              </div>
+
+              <div class="rule-box">
+                <div class="rule-ic pollo-ic">🧺</div>
+                <div class="rule-info">
+                  <strong>বাঁশের পলো (Handwoven Pollo)</strong>
+                  <span>হাওড়ের জলে কাদা মাড়িয়ে বুদবুদের ওপর পলো চাপুন, খাঁচায় হাত দিয়ে শিকার ধরুন।</span>
+                </div>
+              </div>
+
+              <div class="rule-box">
+                <div class="rule-ic radio-ic">📻</div>
+                <div class="rule-info">
+                  <strong>ভাটিয়ালি লোকগীতি বেতার</strong>
+                  <span>মন মাঝি তোর বৈঠা নে রে ও পদ্মার একতারার সুরে নদীর গভীরতায় অবগাহন করুন।</span>
+                </div>
+              </div>
+
+              <div class="rule-box full-span">
+                <div class="rule-ic market-ic">⛵</div>
+                <div class="rule-info">
+                  <strong>মাছের আড়ৎ ও কাষ্ঠ ডিঙি নৌকা</strong>
+                  <span>তাজা মাছ ঘাটের আড়তে বেচে টাকা জমান, কাঠের ডিঙি আনলক করে পদ্মায় পাড়ি জমান।</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Keys bar -->
+            <div class="start-keys-bar">
+              <span class="key-chip"><kbd>Space</kbd> / <kbd>Click</kbd> শিকার</span>
+              <span class="key-chip"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> নিশানা / হাঁটা</span>
+              <span class="key-chip"><kbd>1</kbd> ছিপ</span>
+              <span class="key-chip"><kbd>2</kbd> জাল</span>
+              <span class="key-chip"><kbd>3</kbd> পলো</span>
+              <span class="key-chip"><kbd>M</kbd> আড়ৎ</span>
+              <span class="key-chip"><kbd>E</kbd> বই</span>
+              <span class="key-chip"><kbd>G</kbd> সরঞ্জাম</span>
+              <span class="key-chip"><kbd>T</kbd> পদবি</span>
+              <span class="key-chip"><kbd>P</kbd> মেনু</span>
+            </div>
+          </div>
+        </div>
+
       </div>
-    </div>
 
-    <div class="header-actions">
-      <a href="../../index.html" id="portfolioHomeBtn" class="btn-glass btn-portfolio" title="Return to Intekhab's Portfolio (Intekhab.dev)">
-        👨‍💻 <span class="portfolio-btn-label">Intekhab.dev</span>
-      </a>
-      <button id="openMarketBtn" class="btn-glass btn-accent" title="Fish Market (M)">
-        🏪 মাছের আড়ৎ (Market)
-      </button>
-      <button id="openAlbumBtn" class="btn-glass" title="Fish Encyclopedia (E)">
-        📖 এনসাইক্লোপিডিয়া (Encyclopedia)
-      </button>
-      <button id="openShopBtn" class="btn-glass" title="Gear Shop (G)">
-        ⚙️ সরঞ্জাম (Gear Shop)
-      </button>
-      <button id="openAchievementsBtn" class="btn-glass" title="Achievements & Titles (T)">
-        🏆 অর্জন (Achievements)
-      </button>
-      <button id="folkRadioBtn" class="btn-glass btn-radio" title="Bhatiyali Folk Radio & Ektara (R)">
-        📻 <span id="radioTrackName">মন মাঝি তোর বৈঠা</span> 🎵
-      </button>
-      <button id="toggleSoundBtn" class="btn-glass" title="Toggle SFX">
-        🔊 Sound: On
-      </button>
-      <button id="toggleTouchBtn" class="btn-glass" title="Show/Hide Touch Controls">
-        📱 Touch
-      </button>
-      <button id="openHelpBtn" class="btn-glass btn-accent" title="Controls & Help (H or ?)">
-        ❓ নির্দেশিকা (Help)
-      </button>
-      <button id="pauseGameBtn" class="btn-glass" title="Pause Game (P or Esc)">
-        ⏸️ বিরতি (Pause)
-      </button>
-    </div>
-  </header>
+      <!-- Bottom Bar: Settings, Audio, Help & Developer Credit -->
+      <footer class="start-bottom-bar">
+        <div class="bottom-controls-left">
+          <button id="startSoundToggleBtn" class="btn-start-action" title="Toggle Sound SFX">
+            <span id="startSoundIcon">🔊</span>
+            <span id="startSoundLabel">সাউন্ড: চালু</span>
+          </button>
+          <button id="startRadioNextBtn" class="btn-start-action" title="Change Bhatiyali Song">
+            📻 <span id="startRadioSongName">মন মাঝি তোর বৈঠা</span>
+          </button>
+          <button id="startTouchSwitchBtn" class="btn-start-action" title="Show Touch Controls">
+            📱 টাচ কন্ট্রোল
+          </button>
+          <button id="startHelpGuideBtn" class="btn-start-action btn-start-help" title="Full Help Guide">
+            ❓ বিস্তারিত নির্দেশিকা
+          </button>
+        </div>
 
-  <!-- Main Game Frame -->
+        <div class="bottom-credit-right">
+          <a href="../../index.html" class="start-creator-pill" title="Created by Intekhab Alam Chowdhury • View Developer Portfolio">
+            <img src="./assets/profile.jpg" alt="Intekhab" class="creator-thumb" onerror="this.src='../../assets/profile.jpg'">
+            <span class="credit-text">Made by <b>Intekhab Alam Chowdhury</b> ↗</span>
+          </a>
+          <button id="startDisclaimerBtn" class="btn-start-disclaimer" title="ডিসক্লেইমার পড়ুন">ডিসক্লেইমার</button>
+        </div>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- =========================================================
+       Full-Screen Edge-to-Edge Gameplay Viewport & Floating HUD
+       ========================================================= -->
   <main class="game-viewport-wrapper">
     <div class="game-canvas-bezel">
 
-      <!-- Glassmorphic In-Game HUD -->
-      <div class="hud-top-bar">
-        <div class="hud-group">
-          <div class="hud-chip hud-taka">
-            <span>🪙</span>
-            <span id="hudTaka">৳ 150</span>
+      <!-- The Core Pixel Art Canvas (Edge-to-Edge Full Viewport) -->
+      <canvas id="gameCanvas"></canvas>
+
+      <!-- Two-Deck Glassmorphic Floating Top HUD (100% Screen Fitted, Zero Offscreen Buttons) -->
+      <header class="hud-header">
+        
+        <!-- Deck Row 1: Left Stats + Right Quick Actions -->
+        <div class="hud-row hud-row-primary">
+          <div class="hud-group-left">
+            <div class="hud-brand-pill">
+              <span class="hud-brand-icon">🐟</span>
+              <span class="hud-game-name">মৎস্য শিকারী</span>
+              <span id="playerEquippedTitleBadge" class="equipped-title-badge">গ্রামের শিকারী</span>
+            </div>
+
+            <div class="hud-chip hud-taka" title="জমানো টাকা (Taka Balance)">
+              <span>🪙</span>
+              <strong id="hudTaka">৳ 150</strong>
+            </div>
+
+            <div class="hud-chip hud-basket" title="ঝাঁকার মাছ (Fish in Basket)">
+              <span>🧺</span>
+              <span id="hudCatchCount">0 Fish</span>
+            </div>
           </div>
 
-          <div class="hud-chip">
-            <span>📍</span>
+          <div class="hud-actions-nav">
+            <!-- 4-in-1 Combined Village Hub Button (Market, Album, Shop, Achievements) -->
+            <div class="hub-dropdown-wrapper" id="hubDropdownWrapper">
+              <button id="villageHubBtn" class="hud-btn hud-btn-accent hud-btn-hub" title="আড়ৎ, বই, সরঞ্জাম ও অর্জন (M, E, G, T)" aria-haspopup="true" aria-expanded="false">
+                <span class="btn-icon">🏪</span>
+                <span class="btn-label">আড়ৎ ও সেবা</span>
+                <span class="hub-arrow" id="hubArrow">▾</span>
+              </button>
+
+              <!-- Dropdown Menu for the 4 functions -->
+              <div id="villageHubMenu" class="hub-menu-dropdown hidden" role="menu">
+                <div class="hub-menu-header">
+                  <span class="hub-menu-title">গ্রামের হাট ও সেবা</span>
+                  <span class="hub-menu-sub">৪টি প্রধান কার্যক্রম</span>
+                </div>
+                <div class="hub-menu-items">
+                  <button id="openMarketBtn" class="hub-menu-item" role="menuitem" title="মাছের আড়ৎ (M)">
+                    <span class="hub-item-icon">🏪</span>
+                    <div class="hub-item-text">
+                      <span class="hub-item-title">মাছের আড়ৎ</span>
+                      <span class="hub-item-desc">তাজা শিকার বিক্রি ও দরদাম</span>
+                    </div>
+                    <kbd class="hub-key">M</kbd>
+                  </button>
+                  <button id="openAlbumBtn" class="hub-menu-item" role="menuitem" title="মাছ-বই (E)">
+                    <span class="hub-item-icon">📖</span>
+                    <div class="hub-item-text">
+                      <span class="hub-item-title">মাছ-বই</span>
+                      <span class="hub-item-desc">৩০+ প্রজাতির রূপালি বিবরণ</span>
+                    </div>
+                    <kbd class="hub-key">E</kbd>
+                  </button>
+                  <button id="openShopBtn" class="hub-menu-item" role="menuitem" title="সরঞ্জাম দোকান (G)">
+                    <span class="hub-item-icon">⚙️</span>
+                    <div class="hub-item-text">
+                      <span class="hub-item-title">সরঞ্জাম ও নৌকা</span>
+                      <span class="hub-item-desc">ছিপ, জাল ও ডিঙি আপগ্রেড</span>
+                    </div>
+                    <kbd class="hub-key">G</kbd>
+                  </button>
+                  <button id="openAchievementsBtn" class="hub-menu-item" role="menuitem" title="অর্জন ও পদবি (T)">
+                    <span class="hub-item-icon">🏆</span>
+                    <div class="hub-item-text">
+                      <span class="hub-item-title">অর্জন ও পদবি</span>
+                      <span class="hub-item-desc">শিকারীর খেতাব ও ব্যাজ</span>
+                    </div>
+                    <kbd class="hub-key">T</kbd>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <button id="toggleTouchBtn" class="hud-btn hud-btn-touch" title="টাচ কন্ট্রোল (Toggle Touch Controls)">
+              <span class="btn-icon">📱</span>
+            </button>
+            <button id="folkRadioBtn" class="hud-btn hud-btn-radio" title="Bhatiyali Folk Radio (R)">
+              <span class="btn-icon">📻</span>
+              <span id="radioTrackName" class="btn-label">মন মাঝি</span>
+            </button>
+            <button id="pauseGameBtn" class="hud-btn hud-btn-menu" title="Menu / Pause Game (P or Esc)">
+              <span class="btn-icon">⏸️</span>
+              <span class="btn-label">বিরতি</span>
+            </button>
+            <button id="fullscreenToggleBtn" class="hud-btn hud-btn-fullscreen" title="পূর্ণপর্দা (Toggle Fullscreen - F)">
+              <span class="btn-icon">⛶</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Deck Row 2: Location, Bait, Dolphin Buff & Atmosphere -->
+        <div class="hud-row hud-row-secondary">
+          <div class="hud-chip hud-location-chip" title="শিকারের স্থান (Fishing Location)">
+            <span class="chip-icon">📍</span>
             <select id="locationSelect" class="hud-select" aria-label="Fishing Location">
               <option value="pukur">গ্রামের পুকুর (Village Pukur)</option>
               <option value="haor">হাওড় ও বিল (Haor Wetlands)</option>
@@ -84,8 +271,8 @@
             </select>
           </div>
 
-          <div class="hud-chip">
-            <span>🪱</span>
+          <div class="hud-chip hud-bait-chip" title="টোপ নির্বাচন ও মজুদ (Select Bait)">
+            <span class="chip-icon">🪱</span>
             <select id="baitSelect" class="hud-select" aria-label="Select Bait">
               <option value="kecho">কেঁচো (Earthworm)</option>
               <option value="atta">আটার কাই (Flour Dough)</option>
@@ -93,18 +280,26 @@
               <option value="chingri">নদী চিংড়ি (River Shrimp)</option>
               <option value="pocha_top">পচা টোপ (Fermented Paste)</option>
             </select>
-            <span id="hudBaitCount" style="font-size: 0.72rem; color: #94a3b8; margin-left: 4px;">8 left</span>
+            <span id="hudBaitCount" class="hud-bait-badge">8 left</span>
           </div>
-        </div>
 
-        <div class="hud-group">
-          <div class="hud-chip hidden" id="hudDolphinBuff" style="background: rgba(245, 158, 11, 0.25); border-color: rgba(245, 158, 11, 0.6); color: #fef08a; font-weight: 700; box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);">
+          <div class="hud-chip hud-buff-chip hidden" id="hudDolphinBuff" title="শুশুকের বিশেষ আশীর্বাদ">
             🐬 শুশুকের আশীর্বাদ: 2:00
           </div>
-          <div class="hud-chip" id="hudWeather">☀️ Clear</div>
-          <div class="hud-chip" id="hudTime">Day (দুপুর)</div>
-          <div class="hud-chip" id="hudCatchCount" style="color: #38bdf8;">0 Fish</div>
+
+          <div class="hud-chip hud-atmosphere-chip" title="আবহাওয়া ও প্রহর (Weather & Time)">
+            <span id="hudWeather">☀️ Clear</span>
+            <span class="chip-sep">•</span>
+            <span id="hudTime">Day (দুপুর)</span>
+          </div>
         </div>
+      </header>
+
+      <!-- Subtle Portrait-to-Landscape Mobile Guide Toast -->
+      <div id="mobileOrientationHint" class="mobile-orientation-hint hidden" role="status">
+        <span class="hint-icon">📱↻</span>
+        <span class="hint-text">সেরা অভিজ্ঞতার জন্য ফোনটি আড়াআড়ি (Landscape) ঘুরিয়ে নিন</span>
+        <button id="dismissOrientationHint" class="close-hint-btn" aria-label="Close Hint">&times;</button>
       </div>
 
       <!-- Realtime Minigame HUD Overlays -->
@@ -119,7 +314,10 @@
 
       <!-- Fish Stamina Bar (During fight) -->
       <div id="staminaContainer" class="stamina-bar-container minigame-overlay hidden">
-        <div style="font-size: 0.7rem; font-weight: 700; color: #fef08a;">FISH STAMINA (মাছের শক্তি)</div>
+        <div class="stamina-header-row">
+          <span class="stamina-label">🐟 মাছের শক্তি (Fish Stamina)</span>
+          <span id="staminaPercent" class="stamina-percent">100%</span>
+        </div>
         <div class="stamina-track">
           <div id="fishStaminaFill" class="stamina-fill" style="width: 100%;"></div>
         </div>
@@ -133,70 +331,78 @@
         </div>
       </div>
 
-      <!-- The Core Pixel Art Canvas -->
-      <canvas id="gameCanvas"></canvas>
-    </div>
-
-    <!-- Tool Selector Dock -->
-    <div class="tool-dock-container">
-      <button class="tool-btn active" data-tool="borshi" id="toolBorshi">
-        <span>🎣</span>
-        <span>ছিপ (Borshi Rod)</span>
-        <span class="hotkey">1</span>
-      </button>
-
-      <button class="tool-btn" data-tool="jhal" id="toolJhal">
-        <span>🕸️</span>
-        <span>খেপ জাল (Cast Net)</span>
-        <span class="hotkey">2</span>
-      </button>
-
-      <button class="tool-btn" data-tool="pollo" id="toolPollo">
-        <span>🧺</span>
-        <span>পলো (Bamboo Basket)</span>
-        <span class="hotkey">3</span>
-      </button>
-    </div>
-
-    <!-- Adaptive Touch / Mobile Controls (Visible on mobile or toggle) -->
-    <div id="touchControlsContainer" class="touch-controls-container hidden">
-      <div class="virtual-dpad">
-        <button id="dpadUp" class="dpad-btn dpad-up" aria-label="Up">▲</button>
-        <button id="dpadDown" class="dpad-btn dpad-down" aria-label="Down">▼</button>
-        <button id="dpadLeft" class="dpad-btn dpad-left" aria-label="Left">◀</button>
-        <button id="dpadRight" class="dpad-btn dpad-right" aria-label="Right">▶</button>
-      </div>
-
-      <div class="touch-action-area">
-        <button id="touchActionBtn" class="touch-action-btn" aria-label="Action">
-          <span id="actionButtonText">CAST<br>(ছিপ ফেলুন)</span>
+      <!-- Floating Bottom Tool Dock (Single Cycle Button that changes with a click) -->
+      <div class="tool-dock-container" id="toolDockContainer">
+        <button class="tool-cycle-btn tool-borshi" id="toolCycleBtn" title="শিকারের হাতিয়ার বদলান (Click to switch tool • 1, 2, 3, Q)" aria-label="Switch Fishing Tool">
+          <span class="tool-cycle-badge">হাতিয়ার</span>
+          <div class="tool-cycle-main">
+            <span class="tool-cycle-icon" id="toolCycleIcon">🎣</span>
+            <div class="tool-cycle-text">
+              <span class="tool-cycle-name" id="toolCycleName">ছিপ (Borshi Rod)</span>
+              <span class="tool-cycle-hint" id="toolCycleHint">ক্লিক করে বদলান</span>
+            </div>
+          </div>
+          <div class="tool-cycle-pips" id="toolCyclePips" title="সরাসরি নির্বাচন করুন">
+            <span class="tool-pip active" data-tool="borshi" title="ছিপ (1)">১</span>
+            <span class="tool-pip" data-tool="jhal" title="খেপ জাল (2)">২</span>
+            <span class="tool-pip" data-tool="pollo" title="পলো (3)">৩</span>
+          </div>
+          <span class="tool-cycle-rotate" aria-hidden="true">↻</span>
         </button>
-        <div style="font-size: 0.72rem; color: #94a3b8;">Spacebar on Desktop</div>
       </div>
+
+      <!-- Adaptive Touch / Mobile Controls (Visible on mobile or toggle) -->
+      <div id="touchControlsContainer" class="touch-controls-container hidden">
+        <div class="virtual-dpad">
+          <button id="dpadUp" class="dpad-btn dpad-up" aria-label="Up">▲</button>
+          <button id="dpadDown" class="dpad-btn dpad-down" aria-label="Down">▼</button>
+          <button id="dpadLeft" class="dpad-btn dpad-left" aria-label="Left">◀</button>
+          <button id="dpadRight" class="dpad-btn dpad-right" aria-label="Right">▶</button>
+        </div>
+
+        <div class="touch-action-area">
+          <button id="touchActionBtn" class="touch-action-btn" aria-label="Action">
+            <span id="actionButtonText">CAST<br>(ছিপ ফেলুন)</span>
+          </button>
+          <div style="font-size: 0.72rem; color: #94a3b8;">Spacebar on Desktop</div>
+        </div>
+      </div>
+
+      <!-- Floating Bottom River News Ticker (Live Broadcast Style) -->
+      <div class="hud-bottom-ticker" aria-hidden="true">
+        <div class="ticker-badge">
+          <span class="ticker-live-dot"></span>
+          <span class="ticker-badge-text">📢 নদী সংবাদ</span>
+        </div>
+        <div class="ticker-track">
+          <div class="ticker-marquee">
+            <span class="ticker-item"><strong class="ticker-tag">🌊 পদ্মা:</strong> মোহনায় ইলিশের রূপালি ঝাঁক দেখা গেছে!</span>
+            <span class="ticker-sep">◆</span>
+            <span class="ticker-item"><strong class="ticker-tag">🌧️ আবহাওয়া:</strong> মেঘলা আকাশ ও বর্ষায় ইলিশ ও পাবদার বাইট বেশি মেলে</span>
+            <span class="ticker-sep">◆</span>
+            <span class="ticker-item"><strong class="ticker-tag">🧺 হাওড়-বিল:</strong> কাদার ভেতর কই, শিং ও মাগুর মাছের বুদবুদ উঠছে—পলো নিয়ে নামুন!</span>
+            <span class="ticker-sep">◆</span>
+            <span class="ticker-item"><strong class="ticker-tag">🏪 মাছের আড়ৎ:</strong> ঘাটের তাজা মাছের আড়তে বড় মাছের জন্য বেশি দাম পাওয়া যাচ্ছে</span>
+            <span class="ticker-sep">◆</span>
+            <span class="ticker-item"><strong class="ticker-tag">🐬 শুশুক ডলফিন:</strong> খাঁড়িতে শুশুকের দেখা মিললে শিকারের সুযোগ বাড়ে দ্বিগুণেরও বেশি!</span>
+            <span class="ticker-sep">◆</span>
+            <!-- Duplicate for seamless continuous loop -->
+            <span class="ticker-item"><strong class="ticker-tag">🌊 পদ্মা:</strong> মোহনায় ইলিশের রূপালি ঝাঁক দেখা গেছে!</span>
+            <span class="ticker-sep">◆</span>
+            <span class="ticker-item"><strong class="ticker-tag">🌧️ আবহাওয়া:</strong> মেঘলা আকাশ ও বর্ষায় ইলিশ ও পাবদার বাইট বেশি মেলে</span>
+            <span class="ticker-sep">◆</span>
+            <span class="ticker-item"><strong class="ticker-tag">🧺 হাওড়-বিল:</strong> কাদার ভেতর কই, শিং ও মাগুর মাছের বুদবুদ উঠছে—পলো নিয়ে নামুন!</span>
+            <span class="ticker-sep">◆</span>
+            <span class="ticker-item"><strong class="ticker-tag">🏪 মাছের আড়ৎ:</strong> ঘাটের তাজা মাছের আড়তে বড় মাছের জন্য বেশি দাম পাওয়া যাচ্ছে</span>
+            <span class="ticker-sep">◆</span>
+            <span class="ticker-item"><strong class="ticker-tag">🐬 শুশুক ডলফিন:</strong> খাঁড়িতে শুশুকের দেখা মিললে শিকারের সুযোগ বাড়ে দ্বিগুণেরও বেশি!</span>
+            <span class="ticker-sep">◆</span>
+          </div>
+        </div>
+      </div>
+
     </div>
   </main>
-
-  <!-- Game Footer / Creator Credit -->
-  <footer class="game-footer">
-    <div class="footer-inner">
-      <div class="footer-credit">
-        <span class="footer-fish-icon">🐟</span>
-        <span><strong>মৎস্য শিকারী (Bangla Fisher)</strong> — Designed &amp; Crafted by</span>
-        <a href="../../index.html" class="footer-creator-link"><strong>Intekhab Alam Chowdhury</strong></a>
-      </div>
-      <div class="footer-links">
-        <a href="../../index.html" class="footer-pill-link" title="Go to Intekhab's Portfolio Home">
-          <span>🌐</span> <span>Intekhab.dev</span>
-        </a>
-        <a href="https://github.com/intekhab" target="_blank" rel="noopener noreferrer" class="footer-pill-link" title="Intekhab's GitHub">
-          <span>💻</span> <span>GitHub</span>
-        </a>
-        <a href="mailto:intekhab@gmail.com" class="footer-pill-link" title="Email Intekhab">
-          <span>✉️</span> <span>Contact</span>
-        </a>
-      </div>
-    </div>
-  </footer>
 
   <!-- ================================================= -->
   <!-- MODALS -->
@@ -208,6 +414,12 @@
       <div class="modal-header">
         <h2>🏪 মাছের আড়ৎ (Village Fish Market) <span class="modal-pause-badge">⏸️ Paused</span></h2>
         <button class="close-modal-btn">&times;</button>
+      </div>
+      <div class="modal-hub-tabs">
+        <button class="modal-hub-tab active" data-modal="marketModal">🏪 মাছের আড়ৎ</button>
+        <button class="modal-hub-tab" data-modal="albumModal">📖 মাছ-বই</button>
+        <button class="modal-hub-tab" data-modal="shopModal">⚙️ সরঞ্জাম দোকান</button>
+        <button class="modal-hub-tab" data-modal="achievementsModal">🏆 অর্জন ও খেতাব</button>
       </div>
       <div class="modal-body" id="marketItemsContainer">
         <!-- Injected via game.js -->
@@ -236,6 +448,12 @@
         </div>
         <button class="close-modal-btn">&times;</button>
       </div>
+      <div class="modal-hub-tabs">
+        <button class="modal-hub-tab" data-modal="marketModal">🏪 মাছের আড়ৎ</button>
+        <button class="modal-hub-tab active" data-modal="albumModal">📖 মাছ-বই</button>
+        <button class="modal-hub-tab" data-modal="shopModal">⚙️ সরঞ্জাম দোকান</button>
+        <button class="modal-hub-tab" data-modal="achievementsModal">🏆 অর্জন ও খেতাব</button>
+      </div>
       <div class="modal-body">
         <div class="album-grid" id="albumGridContainer">
           <!-- Injected via game.js -->
@@ -250,6 +468,12 @@
       <div class="modal-header">
         <h2>⚙️ শিকারের সরঞ্জাম ও আপগ্রেড (Fishing Gear & Boats) <span class="modal-pause-badge">⏸️ Paused</span></h2>
         <button class="close-modal-btn">&times;</button>
+      </div>
+      <div class="modal-hub-tabs">
+        <button class="modal-hub-tab" data-modal="marketModal">🏪 মাছের আড়ৎ</button>
+        <button class="modal-hub-tab" data-modal="albumModal">📖 মাছ-বই</button>
+        <button class="modal-hub-tab active" data-modal="shopModal">⚙️ সরঞ্জাম দোকান</button>
+        <button class="modal-hub-tab" data-modal="achievementsModal">🏆 অর্জন ও খেতাব</button>
       </div>
       <div class="modal-body" id="shopItemsContainer">
         <!-- Injected via game.js -->
@@ -299,6 +523,12 @@
           </div>
         </div>
         <button class="close-modal-btn">&times;</button>
+      </div>
+      <div class="modal-hub-tabs">
+        <button class="modal-hub-tab" data-modal="marketModal">🏪 মাছের আড়ৎ</button>
+        <button class="modal-hub-tab" data-modal="albumModal">📖 মাছ-বই</button>
+        <button class="modal-hub-tab" data-modal="shopModal">⚙️ সরঞ্জাম দোকান</button>
+        <button class="modal-hub-tab active" data-modal="achievementsModal">🏆 অর্জন ও খেতাব</button>
       </div>
       <div class="modal-body">
         <div class="equipped-title-banner">
@@ -376,6 +606,9 @@
         <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 22px;">
           <button id="resumeGameBtn" class="btn-glass btn-accent" style="justify-content: center; padding: 12px; font-size: 1rem;">
             ▶️ খেলা চালিয়ে যান (Resume Game)
+          </button>
+          <button id="openStartMenuFromPauseBtn" class="btn-glass" style="justify-content: center; padding: 10px; font-size: 0.92rem; color: #fde047; border-color: rgba(250, 204, 21, 0.4);">
+            🏠 মূল মেনু (Start Menu)
           </button>
           <button id="resetSaveBtn" class="btn-glass" style="justify-content: center; padding: 9px; font-size: 0.82rem; color: #f87171; border-color: rgba(239, 68, 68, 0.3);">
             🔄 সেভ ডেটা রিসেট (Reset All Progress)

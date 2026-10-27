@@ -904,36 +904,74 @@ export class GameRenderer {
       }
     }
 
-    // 2. Khep Jhal in flight or water
-    if (state.currentTool === 'jhal' && state.jhal.state === 'throwing') {
-      const jx = state.jhal.x;
-      const jy = state.jhal.y;
-      const r = state.jhal.radius;
+    // 2. Khep Jhal Aiming Reticle or in flight/water
+    if (state.currentTool === 'jhal') {
+      const netRadius = state.upgrades?.net === 'net_3' ? 85 : (state.upgrades?.net === 'net_2' ? 75 : 65);
 
-      ctx.save();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.ellipse(jx, jy, r, r * 0.45, 0, 0, Math.PI * 2);
-      ctx.stroke();
+      if (state.jhal.state === 'idle' || state.jhal.state === 'aiming') {
+        const jx = state.jhal.targetX;
+        const jy = state.jhal.targetY;
+        const pulse = 1 + Math.sin(this.waterTimer * 4) * 0.05;
+        const curR = netRadius * pulse;
 
-      // Net grid mesh pattern
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-      for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
+        ctx.save();
+        // Dashed net boundary
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = state.jhal.state === 'aiming' ? '#f59e0b' : 'rgba(56, 189, 248, 0.7)';
+        ctx.lineWidth = 1.8;
         ctx.beginPath();
-        ctx.moveTo(jx, jy);
-        ctx.lineTo(jx + Math.cos(a) * r, jy + Math.sin(a) * (r * 0.45));
+        ctx.ellipse(jx, jy, curR, curR * 0.45, 0, 0, Math.PI * 2);
         ctx.stroke();
-      }
+        ctx.setLineDash([]);
 
-      // Lead perimeter weights
-      ctx.fillStyle = '#334155';
-      for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) {
+        // Target crosshair
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 1.2;
         ctx.beginPath();
-        ctx.arc(jx + Math.cos(a) * r, jy + Math.sin(a) * (r * 0.45), 3, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.moveTo(jx - 8, jy);
+        ctx.lineTo(jx + 8, jy);
+        ctx.moveTo(jx, jy - 4);
+        ctx.lineTo(jx, jy + 4);
+        ctx.stroke();
+
+        // Aiming guideline badge
+        ctx.fillStyle = '#fef08a';
+        ctx.font = 'bold 11px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#000000';
+        ctx.shadowBlur = 4;
+        ctx.fillText(state.jhal.state === 'aiming' ? 'নিক্ষেপ করুন (Release)' : '🎯 নিশানা (WASD / Click to Aim)', jx, jy - curR * 0.45 - 6);
+        ctx.restore();
+      } else if (state.jhal.state === 'throwing') {
+        const jx = state.jhal.x;
+        const jy = state.jhal.y;
+        const r = state.jhal.radius;
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.ellipse(jx, jy, r, r * 0.45, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Net grid mesh pattern
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
+          ctx.beginPath();
+          ctx.moveTo(jx, jy);
+          ctx.lineTo(jx + Math.cos(a) * r, jy + Math.sin(a) * (r * 0.45));
+          ctx.stroke();
+        }
+
+        // Lead perimeter weights
+        ctx.fillStyle = '#334155';
+        for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) {
+          ctx.beginPath();
+          ctx.arc(jx + Math.cos(a) * r, jy + Math.sin(a) * (r * 0.45), 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
       }
-      ctx.restore();
     }
 
     // 3. Pollo Plunge Basket Slammed
