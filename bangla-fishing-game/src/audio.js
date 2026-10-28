@@ -14,10 +14,10 @@ class SoundEngine {
     this.currentAmbientMode = null;
     this.currentTrackIndex = 0;
     this.radioTracks = [
-      { id: 'mon_majhi', nameBn: 'মন মাঝি তোর বৈঠা নে রে', nameEn: 'Mon Majhi (Bhatiyali)', tempo: 0.38, mode: 'bhatiyali' },
-      { id: 'majhi_baiya', nameBn: 'মাঝি বাইয়া যাও রে', nameEn: 'Majhi Baiya Jao (River Flow)', tempo: 0.32, mode: 'boat_race' },
-      { id: 'sohag_chand', nameBn: 'সোহাগ চাঁদ বদনী ধনী', nameEn: 'Sohag Chand (Baul Dance)', tempo: 0.30, mode: 'baul' },
-      { id: 'nodiya_ektara', nameBn: 'পদ্মার নদীয়া একতারা', nameEn: 'Nodiya Ektara (Meditative)', tempo: 0.44, mode: 'ektara' }
+      { id: 'mon_majhi', nameBn: 'মন মাঝি', nameEn: 'Mon Majhi', fullNameBn: 'মন মাঝি তোর বৈঠা নে রে', fullNameEn: 'Mon Majhi (Bhatiyali)', tempo: 0.38, mode: 'bhatiyali' },
+      { id: 'majhi_baiya', nameBn: 'মাঝি বাইয়া', nameEn: 'Majhi Baiya', fullNameBn: 'মাঝি বাইয়া যাও রে', fullNameEn: 'Majhi Baiya Jao (River Flow)', tempo: 0.32, mode: 'boat_race' },
+      { id: 'sohag_chand', nameBn: 'সোহাগ চাঁদ', nameEn: 'Sohag Chand', fullNameBn: 'সোহাগ চাঁদ বদনী ধনী', fullNameEn: 'Sohag Chand (Baul Dance)', tempo: 0.30, mode: 'baul' },
+      { id: 'nodiya_ektara', nameBn: 'নদীয়া একতারা', nameEn: 'Nodiya Ektara', fullNameBn: 'পদ্মার নদীয়া একতারা', fullNameEn: 'Nodiya Ektara (Meditative)', tempo: 0.44, mode: 'ektara' }
     ];
   }
 
@@ -75,7 +75,7 @@ class SoundEngine {
       // Mute radio channel
       this.musicEnabled = false;
       this.stopMusic();
-      return { id: 'off', nameBn: 'রেডিও বন্ধ (Radio Off)', nameEn: 'Radio Off' };
+      return { id: 'off', nameBn: 'রেডিও বন্ধ', nameEn: 'Radio Off', fullNameBn: 'রেডিও বন্ধ', fullNameEn: 'Radio Off' };
     } else {
       this.musicEnabled = true;
       this.stopMusic();
@@ -86,7 +86,7 @@ class SoundEngine {
 
   getCurrentTrack() {
     if (!this.musicEnabled) {
-      return { id: 'off', nameBn: 'রেডিও বন্ধ (Off)', nameEn: 'Radio Off' };
+      return { id: 'off', nameBn: 'রেডিও বন্ধ', nameEn: 'Radio Off', fullNameBn: 'রেডিও বন্ধ', fullNameEn: 'Radio Off' };
     }
     return this.radioTracks[this.currentTrackIndex] || this.radioTracks[0];
   }

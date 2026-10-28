@@ -84,7 +84,8 @@ export class MinigameController {
       if (this.game.isPaused) return;
       if (borshi.state === 'nibble') {
         // Missed bite
-        this.game.showToast('মাছ টোপ খেয়ে পালিয়ে গেছে! (Fish ate bait & escaped)');
+        const isEn = this.game.state?.lang === 'en';
+        this.game.showToast(isEn ? 'Fish ate the bait and escaped!' : 'মাছ টোপ খেয়ে পালিয়ে গেছে! (Fish ate bait & escaped)');
         borshi.state = 'idle';
       }
     }, 1800);
@@ -108,7 +109,9 @@ export class MinigameController {
       borshi.sweetZone = 0.5; // Center target
       borshi.sweetZoneWidth = this.game.getRodSweetSpot();
       borshi.fishFightDir = Math.random() > 0.5 ? 1 : -1;
-      this.game.showToast(`টান লেগেছে! ${fish.nameBn} লড়াই করছে! Reel carefully!`);
+      const isEn = this.game.state?.lang === 'en';
+      const fishName = isEn ? fish.name : fish.nameBn;
+      this.game.showToast(isEn ? `Strike! ${fishName} is on the hook! Reel carefully!` : `টান লেগেছে! ${fishName} লড়াই করছে! Reel carefully!`);
     } else if (borshi.state === 'idle') {
       this.startBorshiCast();
     }
@@ -158,15 +161,16 @@ export class MinigameController {
     }
 
     // Tension bounds & dangers
+    const isEn = this.game.state?.lang === 'en';
     if (borshi.tension >= 1.0) {
       // Line snapped!
       sound.playLineSnapWarning();
-      this.game.showToast('সুতা ছিঁড়ে গেছে! (Line snapped under heavy tension!)', 'danger');
+      this.game.showToast(isEn ? 'Fishing line snapped under tension!' : 'সুতা ছিঁড়ে গেছে! (Line snapped under heavy tension!)', 'danger');
       borshi.state = 'idle';
       return;
     } else if (borshi.tension <= 0.02) {
       // Slack line, fish shook hook off
-      this.game.showToast('মাছ হুক ছেড়ে চলে গেল! (Slack line, fish escaped!)', 'warning');
+      this.game.showToast(isEn ? 'Slack line! The fish shook the hook off!' : 'মাছ হুক ছেড়ে চলে গেল! (Slack line, fish escaped!)', 'warning');
       borshi.state = 'idle';
       return;
     }
@@ -233,7 +237,8 @@ export class MinigameController {
           if (caughtList.length > 0) {
             this.game.onCatchMultipleFish(caughtList);
           } else {
-            this.game.showToast('জালে কোনো মাছ পড়েনি! আবার চেষ্টা করুন (No fish in net! Try again)');
+            const isEn = this.game.state?.lang === 'en';
+            this.game.showToast(isEn ? 'No fish caught in net! Try casting again.' : 'জালে কোনো মাছ পড়েনি! আবার চেষ্টা করুন (No fish in net! Try again)');
           }
           jhal.state = 'idle';
         }, 1200);
@@ -276,18 +281,22 @@ export class MinigameController {
 
     if (caughtFish) {
       pollo.trappedFish = caughtFish;
-      this.game.showToast(`পলোতে ঝাপট মারছে! ${caughtFish.nameBn} ভেতরে! দ্রুত হাত দিন!`, 'success');
+      const isEn = this.game.state?.lang === 'en';
+      const fishName = isEn ? caughtFish.name : caughtFish.nameBn;
+      this.game.showToast(isEn ? `Fish trapped in Pollo! ${fishName} thrashing inside! Reach in now!` : `পলোতে ঝাপট মারছে! ${fishName} ভেতরে! দ্রুত হাত দিন!`, 'success');
       // Window to grab
       pollo.grabWindow = setTimeout(() => {
         pollo.grabWindow = null;
         if (this.game.isPaused) return;
         if (pollo.state === 'trapped') {
-          this.game.showToast('মাছ পলোর তলা দিয়ে পিছলে কাদার ভেতর পালাল! (Fish slipped under mud!)', 'warning');
+          const isEnInner = this.game.state?.lang === 'en';
+          this.game.showToast(isEnInner ? 'Fish slipped under the mud and escaped!' : 'মাছ পলোর তলা দিয়ে পিছলে কাদার ভেতর পালাল! (Fish slipped under mud!)', 'warning');
           pollo.state = 'wading';
         }
       }, 3500);
     } else {
-      this.game.showToast('পলো ফাঁকা! কাদায় মাছ ছিল না (Empty basket! Only mud)');
+      const isEn = this.game.state?.lang === 'en';
+      this.game.showToast(isEn ? 'Empty trap! Only mud beneath.' : 'পলো ফাঁকা! কাদায় মাছ ছিল না (Empty basket! Only mud)');
       pollo.emptyTimeout = setTimeout(() => {
         pollo.emptyTimeout = null;
         if (this.game.isPaused) return;

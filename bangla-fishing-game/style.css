@@ -843,6 +843,31 @@ a.btn-glass {
   color: #ffffff;
 }
 
+.hud-btn-lang {
+  border-color: rgba(250, 204, 21, 0.45);
+  color: #fde047;
+  font-weight: 700;
+}
+
+.hud-btn-lang:hover {
+  background: rgba(234, 179, 8, 0.25);
+  border-color: #facc15;
+  color: #ffffff;
+}
+
+.btn-start-lang {
+  background: rgba(45, 30, 2, 0.78);
+  border-color: rgba(250, 204, 21, 0.5);
+  color: #fde047;
+}
+
+.btn-start-lang:hover {
+  background: rgba(234, 179, 8, 0.35);
+  border-color: #fef08a;
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(234, 179, 8, 0.4);
+}
+
 /* Permanently eliminate bottom collision with tool dock */
 .hud-controls-pill {
   display: none !important;

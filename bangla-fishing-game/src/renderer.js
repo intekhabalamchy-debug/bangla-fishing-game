@@ -25,10 +25,10 @@ export class GameRenderer {
   }
 
   getTimeName() {
-    if (this.timeOfDay < 0.2) return { en: 'Dawn (ভোর)', bn: 'ভোরবেলা', isNight: false };
-    if (this.timeOfDay < 0.7) return { en: 'Day (দুপুর)', bn: 'রোদঝরা দুপুর', isNight: false };
-    if (this.timeOfDay < 0.85) return { en: 'Dusk (গোধূলি)', bn: 'মনোরম গোধূলি', isNight: false };
-    return { en: 'Night (রাত)', bn: 'জোনাক জ্বলা রাত', isNight: true };
+    if (this.timeOfDay < 0.2) return { en: 'Dawn', bn: 'ভোরবেলা', isNight: false };
+    if (this.timeOfDay < 0.7) return { en: 'Day', bn: 'দুপুর', isNight: false };
+    if (this.timeOfDay < 0.85) return { en: 'Dusk', bn: 'গোধূলি', isNight: false };
+    return { en: 'Night', bn: 'রাত', isNight: true };
   }
 
   updateTime(delta = 1) {
@@ -73,12 +73,12 @@ export class GameRenderer {
 
     // 5.5 Draw Surfacing Gangetic River Dolphin (পদ্মার শুশুক)
     if (state.dolphin && state.dolphin.active) {
-      this.drawDolphinSurfacing(w, h, state.dolphin);
+      this.drawDolphinSurfacing(w, h, state.dolphin, state);
     }
 
     // 5.6 Draw Swimming Fishing Otter (সুন্দরবনের ভোঁদড়)
     if (state.otter && state.otter.active) {
-      this.drawFishingOtter(w, h, state.otter);
+      this.drawFishingOtter(w, h, state.otter, state);
     }
 
     // 6. Draw Mud Clouds & Under-water Particles
@@ -411,7 +411,7 @@ export class GameRenderer {
     this.drawDinghiBoat(canoeX, canoeY, 0.75);
   }
 
-  drawFishingOtter(w, h, otter) {
+  drawFishingOtter(w, h, otter, state) {
     const { ctx } = this;
     const ox = otter.x;
     const oy = otter.y;
@@ -503,11 +503,11 @@ export class GameRenderer {
     ctx.shadowColor = '#000000';
     ctx.shadowBlur = 4;
     ctx.fillStyle = '#fed7aa';
-    ctx.fillText('🦦 পোষা ভোঁদড় (Fishing Otter)', ox, oy - 16);
+    ctx.fillText(state?.lang === 'en' ? '🦦 Fishing Otter' : '🦦 পোষা ভোঁদড়', ox, oy - 16);
     ctx.restore();
   }
 
-  drawDolphinSurfacing(w, h, dolphin) {
+  drawDolphinSurfacing(w, h, dolphin, state) {
     const { ctx } = this;
     const p = Math.max(0, Math.min(1, dolphin.progress));
 
@@ -610,10 +610,10 @@ export class GameRenderer {
     ctx.shadowColor = '#000000';
     ctx.shadowBlur = 6;
     ctx.fillStyle = '#fef08a';
-    ctx.fillText('🐬 পদ্মার শুশুক (River Dolphin)', curX, curY - 32);
+    ctx.fillText(state?.lang === 'en' ? '🐬 River Dolphin' : '🐬 পদ্মার শুশুক', curX, curY - 32);
     ctx.font = '10px system-ui, sans-serif';
     ctx.fillStyle = '#38bdf8';
-    ctx.fillText('✨ নদী আশীর্বাদ (+50% Fast Bite)', curX, curY - 18);
+    ctx.fillText(state?.lang === 'en' ? '✨ +50% Fast Bite Blessing' : '✨ নদী আশীর্বাদ (+50% Fast Bite)', curX, curY - 18);
     ctx.restore();
   }
 
@@ -899,7 +899,7 @@ export class GameRenderer {
         ctx.font = 'bold 18px monospace';
         ctx.shadowColor = '#000';
         ctx.shadowBlur = 4;
-        ctx.fillText('টান! (BITE!)', bx - 38, by - 24);
+        ctx.fillText(state?.lang === 'en' ? 'BITE!' : 'টান!', bx - 24, by - 24);
         ctx.shadowBlur = 0;
       }
     }
@@ -940,7 +940,10 @@ export class GameRenderer {
         ctx.textAlign = 'center';
         ctx.shadowColor = '#000000';
         ctx.shadowBlur = 4;
-        ctx.fillText(state.jhal.state === 'aiming' ? 'নিক্ষেপ করুন (Release)' : '🎯 নিশানা (WASD / Click to Aim)', jx, jy - curR * 0.45 - 6);
+        const jhalText = state?.lang === 'en'
+          ? (state.jhal.state === 'aiming' ? 'Release Net' : '🎯 Aim Net (WASD / Click)')
+          : (state.jhal.state === 'aiming' ? 'ছেড়ে দিন' : '🎯 নিশানা (WASD / Click)');
+        ctx.fillText(jhalText, jx, jy - curR * 0.45 - 6);
         ctx.restore();
       } else if (state.jhal.state === 'throwing') {
         const jx = state.jhal.x;
@@ -1003,7 +1006,7 @@ export class GameRenderer {
       // Hands grabbing indicator
       ctx.fillStyle = '#fef08a';
       ctx.font = 'bold 15px monospace';
-      ctx.fillText('ধরে ফেলুন! (GRAB!)', px - 45, py - 52);
+      ctx.fillText(state?.lang === 'en' ? 'GRAB!' : 'হাত দিন!', px - 35, py - 52);
       ctx.restore();
     }
   }

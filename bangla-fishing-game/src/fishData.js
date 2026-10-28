@@ -57,7 +57,7 @@ export const LOCATIONS = {
 export const BAITS = {
   kecho: {
     id: 'kecho',
-    name: 'Earthworm (কেঁচো)',
+    name: 'Earthworm',
     nameBn: 'মাটির কেঁচো',
     desc: 'Classic live worm dug from moist soil. Loved by Shing, Magur, Puthi, and Koi.',
     cost: 5,
@@ -67,7 +67,7 @@ export const BAITS = {
   },
   atta: {
     id: 'atta',
-    name: 'Flour Dough (আটার লাড্ডু)',
+    name: 'Flour Dough',
     nameBn: 'সুগন্ধি আটার কাই',
     desc: 'Sweet kneaded dough with cardamom aroma. Irresistible to Rui, Katla, and Kalbaush.',
     cost: 10,
@@ -77,7 +77,7 @@ export const BAITS = {
   },
   piprar_dim: {
     id: 'piprar_dim',
-    name: 'Ant Eggs (পিঁপড়ার ডিম)',
+    name: 'Ant Eggs',
     nameBn: 'গাছের লাল পিঁপড়ার ডিম',
     desc: 'Prized delicacy harvested from weaver ants. The ultimate temptation for monster carps!',
     cost: 30,
@@ -87,7 +87,7 @@ export const BAITS = {
   },
   chingri: {
     id: 'chingri',
-    name: 'River Shrimp (নদীর ছোট চিংড়ি)',
+    name: 'River Shrimp',
     nameBn: 'তাজা নদী চিংড়ি',
     desc: 'Tiny live freshwater shrimp. Deadly weapon for Boal, Shol, Pabda, Ilish, and Bhetki.',
     cost: 45,
@@ -97,7 +97,7 @@ export const BAITS = {
   },
   pocha_top: {
     id: 'pocha_top',
-    name: 'Fermented Paste (পচা টোপ)',
+    name: 'Fermented Paste',
     nameBn: 'গন্ধযুক্ত পচা টোপ',
     desc: 'Pungent secret mash for monster bottom scavengers like Boal, Pangas, Kachhim, and Golden Boal.',
     cost: 80,
@@ -688,30 +688,30 @@ export const FISH_SPECIES = [
 
 export const GEAR_UPGRADES = {
   rods: [
-    { id: 'rod_1', name: 'Bamboo Chhip (বাঁশের ছিপ)', price: 0, power: 1.0, sweetSpot: 0.24, desc: 'Humble village bamboo rod with cotton thread.' },
-    { id: 'rod_2', name: 'Polished Cane Rod (বেতের ছিপ)', price: 350, power: 1.3, sweetSpot: 0.30, desc: 'Flexible Bengali cane rod with brass guides and smoother action.' },
-    { id: 'rod_3', name: 'Braided Fiber Rod (ফাইবার ছিপ)', price: 900, power: 1.7, sweetSpot: 0.38, desc: 'Durable modern rod to handle furious thrashing from Boal and Katla.' },
-    { id: 'rod_4', name: 'Royal Gorjon Wood (গর্জন কাঠের ছিপ)', price: 2400, power: 2.3, sweetSpot: 0.48, desc: 'Mastercrafted timber rod inlaid with brass. Tames even Padma River monsters.' }
+    { id: 'rod_1', name: 'Bamboo Chhip', nameBn: 'বাঁশের ছিপ', price: 0, power: 1.0, sweetSpot: 0.24, desc: 'Humble village bamboo rod with cotton thread.' },
+    { id: 'rod_2', name: 'Polished Cane Rod', nameBn: 'বেতের ছিপ', price: 350, power: 1.3, sweetSpot: 0.30, desc: 'Flexible Bengali cane rod with brass guides and smoother action.' },
+    { id: 'rod_3', name: 'Braided Fiber Rod', nameBn: 'ফাইবার ছিপ', price: 900, power: 1.7, sweetSpot: 0.38, desc: 'Durable modern rod to handle furious thrashing from Boal and Katla.' },
+    { id: 'rod_4', name: 'Royal Gorjon Wood', nameBn: 'গর্জন কাঠের ছিপ', price: 2400, power: 2.3, sweetSpot: 0.48, desc: 'Mastercrafted timber rod inlaid with brass. Tames even Padma River monsters.' }
   ],
   lines: [
-    { id: 'line_1', name: 'Waxed Thread (মোম সুতা)', price: 0, strength: 40, snapRisk: 'High', desc: 'Standard cord, snap-prone under high tension.' },
-    { id: 'line_2', name: 'Nylon Monofilament (নাইলন সুতা)', price: 200, strength: 80, snapRisk: 'Medium', desc: 'Resilient and elastic line for fighting medium fish.' },
-    { id: 'line_3', name: 'Braided Silk Cord (রেশমি সুতা)', price: 650, strength: 140, snapRisk: 'Low', desc: 'Zero stretch and high abrasion resistance against sharp teeth.' },
-    { id: 'line_4', name: 'Kevlar River Core (কেভলার ডোর)', price: 1600, strength: 220, snapRisk: 'Minimal', desc: 'Indestructible line built for 15+ kg river giants.' }
+    { id: 'line_1', name: 'Waxed Thread', nameBn: 'মোম সুতা', price: 0, strength: 40, snapRisk: 'High', desc: 'Standard cord, snap-prone under high tension.' },
+    { id: 'line_2', name: 'Nylon Monofilament', nameBn: 'নাইলন সুতা', price: 200, strength: 80, snapRisk: 'Medium', desc: 'Resilient and elastic line for fighting medium fish.' },
+    { id: 'line_3', name: 'Braided Silk Cord', nameBn: 'রেশমি সুতা', price: 650, strength: 140, snapRisk: 'Low', desc: 'Zero stretch and high abrasion resistance against sharp teeth.' },
+    { id: 'line_4', name: 'Kevlar River Core', nameBn: 'কেভলার ডোর', price: 1600, strength: 220, snapRisk: 'Minimal', desc: 'Indestructible line built for 15+ kg river giants.' }
   ],
   nets: [
-    { id: 'net_1', name: 'Small Cast Net (ছোট খেপ জাল)', price: 150, radius: 55, catchChance: 0.65, desc: 'Lightweight cast net suitable for shallow pond schooling fish.' },
-    { id: 'net_2', name: 'Weighted River Net (সীসার খেপ জাল)', price: 750, radius: 85, catchChance: 0.85, desc: 'Lead weights bring this net down rapidly to trap deeper carps.' },
-    { id: 'net_3', name: 'Royal Mahajal (মহাজাল)', price: 2100, radius: 120, catchChance: 0.95, desc: 'Massive traditional cast net capable of scooping multiple giants in one throw.' }
+    { id: 'net_1', name: 'Small Cast Net', nameBn: 'ছোট খেপ জাল', price: 150, radius: 55, catchChance: 0.65, desc: 'Lightweight cast net suitable for shallow pond schooling fish.' },
+    { id: 'net_2', name: 'Weighted River Net', nameBn: 'সীসার খেপ জাল', price: 750, radius: 85, catchChance: 0.85, desc: 'Lead weights bring this net down rapidly to trap deeper carps.' },
+    { id: 'net_3', name: 'Royal Mahajal', nameBn: 'মহাজাল', price: 2100, radius: 120, catchChance: 0.95, desc: 'Massive traditional cast net capable of scooping multiple giants in one throw.' }
   ],
   pollos: [
-    { id: 'pollo_1', name: 'Bamboo Pollo (বাঁশের পলো)', price: 100, slamSpeed: 1.0, catchWindow: 2000, desc: 'Traditional cone basket woven from split green bamboo.' },
-    { id: 'pollo_2', name: 'Reinforced Cane Pollo (বেত বাঁধা পলো)', price: 500, slamSpeed: 1.4, catchWindow: 2800, desc: 'Tighter weave with mud flange to stop slippery fish escaping.' },
-    { id: 'pollo_3', name: 'Master Pollo (স্বর্ণ পলো)', price: 1500, slamSpeed: 1.9, catchWindow: 3800, desc: 'Extra wide and balanced basket that traps elusive mud predators instantly.' }
+    { id: 'pollo_1', name: 'Bamboo Pollo', nameBn: 'বাঁশের পলো', price: 100, slamSpeed: 1.0, catchWindow: 2000, desc: 'Traditional cone basket woven from split green bamboo.' },
+    { id: 'pollo_2', name: 'Reinforced Cane Pollo', nameBn: 'বেত বাঁধা পলো', price: 500, slamSpeed: 1.4, catchWindow: 2800, desc: 'Tighter weave with mud flange to stop slippery fish escaping.' },
+    { id: 'pollo_3', name: 'Master Pollo', nameBn: 'স্বর্ণ পলো', price: 1500, slamSpeed: 1.9, catchWindow: 3800, desc: 'Extra wide and balanced basket that traps elusive mud predators instantly.' }
   ],
   boats: [
-    { id: 'boat_0', name: 'Shore Fishing (ঘাট থেকে মাছ ধরা)', price: 0, unlocked: true, desc: 'Fishing from pond bank steps and river ghat.' },
-    { id: 'boat_1', name: 'Dinghi Nouka (ডিঙি নৌকা)', price: 1800, unlocked: false, desc: 'Traditional curved wooden boat. Unlocks deep river fishing spots in Padma with 50% rarer fish!' }
+    { id: 'boat_0', name: 'Shore Fishing', nameBn: 'ঘাট থেকে মাছ ধরা', price: 0, unlocked: true, desc: 'Fishing from pond bank steps and river ghat.' },
+    { id: 'boat_1', name: 'Dinghi Nouka', nameBn: 'ডিঙি নৌকা', price: 1800, unlocked: false, desc: 'Traditional curved wooden boat. Unlocks deep river fishing spots in Padma with 50% rarer fish!' }
   ]
 };
 
@@ -724,6 +724,8 @@ export const ACHIEVEMENTS = [
     descEn: 'Catch your very first fish or aquatic creature.',
     icon: '🎣',
     titleReward: 'শিক্ষানবিস শিকারী (Novice Fisher)',
+    titleRewardBn: 'শিক্ষানবিস শিকারী',
+    titleRewardEn: 'Novice Fisher',
     rewardTaka: 50
   },
   {
@@ -734,6 +736,8 @@ export const ACHIEVEMENTS = [
     descEn: 'Catch 10 fish total in the village pukur.',
     icon: '🏡',
     titleReward: 'পুকুর শিকারী (Pond Angler)',
+    titleRewardBn: 'পুকুর শিকারী',
+    titleRewardEn: 'Pond Angler',
     rewardTaka: 150
   },
   {
@@ -744,6 +748,8 @@ export const ACHIEVEMENTS = [
     descEn: 'Trap 5 mud fish using Bamboo Pollo in Haor wetlands.',
     icon: '🧺',
     titleReward: 'পলো সর্দার (Pollo Chieftain)',
+    titleRewardBn: 'পলো সর্দার',
+    titleRewardEn: 'Pollo Chieftain',
     rewardTaka: 300
   },
   {
@@ -754,6 +760,8 @@ export const ACHIEVEMENTS = [
     descEn: 'Catch a prize Padma Ilish weighing over 1.5 kg.',
     icon: '👑',
     titleReward: 'ইলিশ রাজ (Hilsa Monarch)',
+    titleRewardBn: 'ইলিশ রাজ',
+    titleRewardEn: 'Hilsa Monarch',
     rewardTaka: 600
   },
   {
@@ -764,6 +772,8 @@ export const ACHIEVEMENTS = [
     descEn: 'Catch both a Bhetki and a Tiger Prawn in Sundarbans.',
     icon: '🐅',
     titleReward: 'খাঁড়ির বাঘ (Creek Tiger)',
+    titleRewardBn: 'খাঁড়ির বাঘ',
+    titleRewardEn: 'Creek Tiger',
     rewardTaka: 500
   },
   {
@@ -774,6 +784,8 @@ export const ACHIEVEMENTS = [
     descEn: 'Catch either the mythical Sworna Boal or ancient Kachhim.',
     icon: '✨',
     titleReward: 'নদী সাধক (River Mystic)',
+    titleRewardBn: 'নদী সাধক',
+    titleRewardEn: 'River Mystic',
     rewardTaka: 1000
   },
   {
@@ -784,6 +796,8 @@ export const ACHIEVEMENTS = [
     descEn: 'Witness the Gangetic Dolphin surfacing and receive blessing.',
     icon: '🐬',
     titleReward: 'শুশুকের বন্ধু (Dolphin Friend)',
+    titleRewardBn: 'শুশুকের বন্ধু',
+    titleRewardEn: 'Dolphin Friend',
     rewardTaka: 350
   },
   {
@@ -794,6 +808,8 @@ export const ACHIEVEMENTS = [
     descEn: 'Dredge 3 junk items out of the water to clean the riverbed.',
     icon: '♻️',
     titleReward: 'নদী সেবক (River Guardian)',
+    titleRewardBn: 'নদী সেবক',
+    titleRewardEn: 'River Guardian',
     rewardTaka: 200
   },
   {
@@ -804,6 +820,8 @@ export const ACHIEVEMENTS = [
     descEn: 'Discover at least 20 different species in the Encyclopedia.',
     icon: '📖',
     titleReward: 'মৎস্য বিশারদ (Grand Angler)',
+    titleRewardBn: 'মৎস্য বিশারদ',
+    titleRewardEn: 'Grand Angler',
     rewardTaka: 850
   }
 ];

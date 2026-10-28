@@ -1,0 +1,9 @@
+{
+  "name": "bangla-fishing-game",
+  "version": "1.0.0",
+  "description": "Traditional Bangladeshi riverine & pond fishing browser game",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

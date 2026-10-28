@@ -6,6 +6,7 @@ import { GameRenderer } from './renderer.js';
 import { MinigameController } from './minigames.js';
 import { getFishSpriteDataUrl } from './fishSprites.js';
 import { StartMenuBg } from './startMenuBg.js';
+import { t, I18N } from './i18n.js';
 
 export class Game {
   constructor() {
@@ -22,6 +23,7 @@ export class Game {
 
     // Saveable Game State
     this.state = {
+      lang: 'bn', // 'bn' (Bangla) or 'en' (English)
       taka: 150, // Starting currency
       location: LOCATIONS.PUKUR,
       weather: 'clear', // 'clear', 'rain', 'monsoon'
@@ -124,6 +126,7 @@ export class Game {
     this.lastTime = performance.now();
 
     this.loadState();
+    this.applyLanguage();
     this.initFishPool();
     this.bindInputs();
     this.bindUi();
@@ -137,6 +140,232 @@ export class Game {
   }
 
   // ==========================================
+  // Bilingual / Internationalization (i18n)
+  // ==========================================
+  t(key, ...args) {
+    return t(key, this.state?.lang || 'bn', ...args);
+  }
+
+  getEquippedTitle(lang = this.state.lang) {
+    const raw = this.state.equippedTitle || '';
+    if (!raw) return lang === 'en' ? 'Village Angler' : 'গ্রামের শিকারী';
+
+    const ach = ACHIEVEMENTS.find((a) => {
+      return a.titleReward === raw || a.titleRewardBn === raw || a.titleRewardEn === raw || a.titleEn === raw || a.titleBn === raw;
+    });
+
+    if (ach) {
+      if (lang === 'en') {
+        if (ach.titleRewardEn) return ach.titleRewardEn;
+        const m = ach.titleReward.match(/\(([^)]+)\)/);
+        return m ? m[1].trim() : (ach.titleEn || raw);
+      } else {
+        if (ach.titleRewardBn) return ach.titleRewardBn;
+        return ach.titleReward.split('(')[0].trim() || ach.titleBn;
+      }
+    }
+
+    const match = raw.match(/^(.*?)\s*\((.*?)\)$/);
+    if (match) {
+      return lang === 'en' ? match[2].trim() : match[1].trim();
+    }
+
+    if (lang === 'en') {
+      const clean = raw.replace(/[\u0980-\u09FF]/g, '').trim();
+      return clean || 'Village Angler';
+    }
+
+    return raw;
+  }
+
+  toggleLanguage() {
+    this.state.lang = this.state.lang === 'bn' ? 'en' : 'bn';
+    try {
+      localStorage.setItem('bangla_fishing_lang', this.state.lang);
+    } catch (e) {
+      console.warn('Could not save language to localStorage:', e);
+    }
+    sound.playUiClick();
+    this.applyLanguage();
+    this.updateHud();
+    this.updateToolDock();
+    this.updateActionButtonLabel();
+    this.showToast(this.t('langSwitchedToast'), 'info');
+    this.saveState();
+
+    // Dynamically refresh any visible modal
+    const openModal = document.querySelector('.modal-backdrop:not(.hidden)');
+    if (openModal) {
+      if (openModal.id === 'marketModal') this.renderMarketModal();
+      else if (openModal.id === 'albumModal') this.renderAlbumModal();
+      else if (openModal.id === 'shopModal') this.renderShopModal();
+      else if (openModal.id === 'achievementsModal') this.renderAchievementsModal();
+      else if (openModal.id === 'pauseModal') this.updatePauseModalText();
+    }
+  }
+
+  applyLanguage() {
+    const isEn = this.state.lang === 'en';
+
+    // 1. Static text elements with data-i18n
+    document.querySelectorAll('[data-i18n]').forEach((el) => {
+      const key = el.getAttribute('data-i18n');
+      const val = this.t(key);
+      if (val !== undefined) el.textContent = val;
+    });
+
+    // 2. Elements with HTML markup
+    document.querySelectorAll('[data-i18n-html]').forEach((el) => {
+      const key = el.getAttribute('data-i18n-html');
+      const val = this.t(key);
+      if (val !== undefined) el.innerHTML = val;
+    });
+
+    // 3. Language button badges
+    const startLangLabel = document.getElementById('startLangLabel');
+    if (startLangLabel) startLangLabel.textContent = isEn ? 'বাংলা' : 'English';
+
+    const hudLangLabel = document.getElementById('hudLangLabel');
+    if (hudLangLabel) hudLangLabel.textContent = isEn ? 'বাংলা' : 'English';
+
+    const pauseLangLabel = document.getElementById('pauseLangLabel');
+    if (pauseLangLabel) pauseLangLabel.textContent = isEn ? 'Language: Switch to বাংলা' : 'ভাষা: English এ পরিবর্তন';
+
+    // 4. Start menu sound button label
+    const startSoundLabel = document.getElementById('startSoundLabel');
+    if (startSoundLabel) {
+      startSoundLabel.textContent = sound.muted ? this.t('soundLabelOff') : this.t('soundLabelOn');
+    }
+
+    // 5. Select dropdowns (Location & Bait)
+    const locSelect = document.getElementById('locationSelect');
+    if (locSelect) {
+      const curLoc = locSelect.value;
+      locSelect.innerHTML = isEn ? `
+        <option value="pukur">Village Pukur</option>
+        <option value="haor">Haor Wetlands</option>
+        <option value="padma">Padma River</option>
+        <option value="sundarbans">Sundarbans Creek</option>
+      ` : `
+        <option value="pukur">গ্রামের পুকুর</option>
+        <option value="haor">হাওড় ও বিল</option>
+        <option value="padma">পদ্মা নদীর ঘাট</option>
+        <option value="sundarbans">সুন্দরবনের খাঁড়ি</option>
+      `;
+      locSelect.value = curLoc;
+    }
+
+    const baitSelect = document.getElementById('baitSelect');
+    if (baitSelect) {
+      const curBait = baitSelect.value;
+      baitSelect.innerHTML = isEn ? `
+        <option value="kecho">Earthworm</option>
+        <option value="atta">Flour Dough</option>
+        <option value="piprar_dim">Ant Eggs</option>
+        <option value="chingri">River Shrimp</option>
+        <option value="pocha_top">Fermented Paste</option>
+      ` : `
+        <option value="kecho">মাটির কেঁচো</option>
+        <option value="atta">সুগন্ধি আটার কাই</option>
+        <option value="piprar_dim">পিঁপড়ার ডিম</option>
+        <option value="chingri">তাজা নদী চিংড়ি</option>
+        <option value="pocha_top">পচা টোপ</option>
+      `;
+      baitSelect.value = curBait;
+    }
+
+    // Radio Track Names in HUD and Start Menu
+    const curTrack = sound.getCurrentTrack();
+    const radioNameEl = document.getElementById('radioTrackName');
+    if (radioNameEl && curTrack) {
+      radioNameEl.textContent = isEn ? curTrack.nameEn : curTrack.nameBn;
+    }
+    const songLabel = document.getElementById('startRadioSongName');
+    if (songLabel && curTrack) {
+      songLabel.textContent = isEn ? (curTrack.fullNameEn || curTrack.nameEn) : (curTrack.fullNameBn || curTrack.nameBn);
+    }
+
+    // Tool cycle pips digits
+    const pips = document.querySelectorAll('#toolCyclePips .tool-pip');
+    if (pips.length >= 3) {
+      pips[0].textContent = isEn ? '1' : '১';
+      pips[1].textContent = isEn ? '2' : '২';
+      pips[2].textContent = isEn ? '3' : '৩';
+    }
+
+    // 6. News Marquee Ticker
+    const marqueeEl = document.querySelector('.ticker-marquee');
+    if (marqueeEl) {
+      const newsItems = I18N[this.state.lang].tickerNews;
+      let html = '';
+      for (let repeat = 0; repeat < 2; repeat++) {
+        newsItems.forEach((n) => {
+          html += `<span class="ticker-item"><strong class="ticker-tag">${n.tag}</strong> ${n.text}</span><span class="ticker-sep">◆</span>`;
+        });
+      }
+      marqueeEl.innerHTML = html;
+    }
+
+    // 7. Modal Headers & Tab Buttons
+    const marketH2 = document.querySelector('#marketModal .modal-header h2');
+    if (marketH2) marketH2.innerHTML = `${this.t('marketTitle')} <span class="modal-pause-badge">${this.t('modalPaused')}</span>`;
+
+    const albumH2 = document.querySelector('#albumModal .modal-header h2');
+    if (albumH2) albumH2.innerHTML = `${this.t('albumTitle')} <span class="modal-pause-badge">${this.t('modalPaused')}</span>`;
+
+    const shopH2 = document.querySelector('#shopModal .modal-header h2');
+    if (shopH2) shopH2.innerHTML = `${this.t('shopTitle')} <span class="modal-pause-badge">${this.t('modalPaused')}</span>`;
+
+    const achH2 = document.querySelector('#achievementsModal .modal-header h2');
+    if (achH2) achH2.innerHTML = `${this.t('achTitle')} <span class="modal-pause-badge">${this.t('modalPaused')}</span>`;
+
+    const helpH2 = document.querySelector('#helpModal .modal-header h2');
+    if (helpH2) helpH2.innerHTML = `${this.t('helpTitle')} <span class="modal-pause-badge">${this.t('modalPaused')}</span>`;
+
+    document.querySelectorAll('.modal-hub-tabs').forEach((tabsRow) => {
+      tabsRow.querySelectorAll('.modal-hub-tab').forEach((tab) => {
+        const m = tab.dataset.modal;
+        if (m === 'marketModal') tab.textContent = this.t('tabMarket');
+        else if (m === 'albumModal') tab.textContent = this.t('tabAlbum');
+        else if (m === 'shopModal') tab.textContent = this.t('tabShop');
+        else if (m === 'achievementsModal') tab.textContent = this.t('tabAch');
+      });
+    });
+
+    const sellAllBtn = document.getElementById('sellAllBtn');
+    if (sellAllBtn) sellAllBtn.textContent = this.t('marketSellAllBtn');
+
+    // 8. Pause Modal Labels
+    this.updatePauseModalText();
+  }
+
+  updatePauseModalText() {
+    const isEn = this.state.lang === 'en';
+    const pauseH2 = document.querySelector('#pauseModal .modal-header h2');
+    if (pauseH2) pauseH2.textContent = this.t('pauseTitle');
+
+    const pauseH3 = document.querySelector('#pauseModal h3');
+    if (pauseH3) pauseH3.textContent = this.t('pauseRestHeading');
+
+    const pauseP = document.querySelector('#pauseModal .modal-body > p');
+    if (pauseP) pauseP.textContent = this.t('pauseRestSub');
+
+    const locEl = document.getElementById('pauseLocationName');
+    if (locEl) locEl.textContent = isEn ? (this.state.location.name || 'Village Pukur') : (this.state.location.nameBn || 'গ্রামের পুকুর');
+
+    const pauseLangLabel = document.getElementById('pauseLangLabel');
+    if (pauseLangLabel) pauseLangLabel.textContent = isEn ? 'Language: Switch to বাংলা' : 'ভাষা: English এ পরিবর্তন';
+
+    const resumeBtn = document.getElementById('resumeGameBtn');
+    if (resumeBtn) resumeBtn.textContent = this.t('pauseResumeBtn');
+
+    const mainMenuBtn = document.getElementById('openStartMenuFromPauseBtn');
+    if (mainMenuBtn) mainMenuBtn.textContent = this.t('pauseMainMenuBtn');
+
+    const resetBtn = document.getElementById('resetSaveBtn');
+    if (resetBtn) resetBtn.textContent = this.t('pauseResetBtn');
+  }
+
   // ==========================================
   // Riverine Fishing Start Menu Controller
   // ==========================================
@@ -156,6 +385,11 @@ export class Game {
     const rulesToggle = document.getElementById('startRulesToggle');
     const rulesCard = document.getElementById('startRulesCard');
     const disclaimerBtn = document.getElementById('startDisclaimerBtn');
+    const langBtn = document.getElementById('startLangToggleBtn');
+
+    langBtn?.addEventListener('click', () => {
+      this.toggleLanguage();
+    });
 
     playBtn?.addEventListener('click', () => {
       this.closeStartMenu();
@@ -170,7 +404,7 @@ export class Game {
 
     disclaimerBtn?.addEventListener('click', () => {
       sound.playUiClick();
-      this.showToast('📜 ডিসক্লেইমার: নদীমাতৃক গ্রাম বাংলার ঐতিহ্যবাহী মাছ ধরার সংস্কৃতি ও দেশি মাছ সংরক্ষণে এক শৈল্পিক প্রয়াস।', 4000);
+      this.showToast(this.t('disclaimerToast'), 4000);
     });
 
     soundBtn?.addEventListener('click', () => {
@@ -178,24 +412,27 @@ export class Game {
       const icon = document.getElementById('startSoundIcon');
       const label = document.getElementById('startSoundLabel');
       if (icon) icon.textContent = isMuted ? '🔇' : '🔊';
-      if (label) label.textContent = isMuted ? 'সাউন্ড: বন্ধ' : 'সাউন্ড: চালু';
-      this.showToast(isMuted ? 'সাউন্ড মিউট করা হয়েছে (Sound Muted)' : 'সাউন্ড চালু করা হয়েছে (Sound On)');
+      if (label) label.textContent = isMuted ? this.t('soundLabelOff') : this.t('soundLabelOn');
+      this.showToast(isMuted ? (this.state.lang === 'en' ? 'Sound Muted' : 'সাউন্ড মিউট করা হয়েছে') : (this.state.lang === 'en' ? 'Sound On' : 'সাউন্ড চালু করা হয়েছে'));
     });
 
     radioBtn?.addEventListener('click', () => {
       const track = sound.nextRadioTrack();
       const songLabel = document.getElementById('startRadioSongName');
       const inGameRadioLabel = document.getElementById('radioTrackName');
-      if (songLabel) songLabel.textContent = track.nameBn;
-      if (inGameRadioLabel) inGameRadioLabel.textContent = track.nameBn;
-      this.showToast(`রেডিও স্টেশন: ${track.nameBn}`);
+      const tName = this.state.lang === 'en' ? track.nameEn : track.nameBn;
+      if (songLabel) songLabel.textContent = tName;
+      if (inGameRadioLabel) inGameRadioLabel.textContent = tName;
+      this.showToast(`${this.state.lang === 'en' ? 'Radio Station' : 'রেডিও স্টেশন'}: ${tName}`);
     });
 
     touchBtn?.addEventListener('click', () => {
       const touchContainer = document.getElementById('touchControlsContainer');
       if (touchContainer) {
         const isHidden = touchContainer.classList.toggle('hidden');
-        this.showToast(isHidden ? 'টাচ কন্ট্রোল লুকানো হয়েছে (Touch Hidden)' : 'টাচ কন্ট্রোল দেখানো হয়েছে (Touch Visible)');
+        this.showToast(isHidden
+          ? (this.state.lang === 'en' ? 'Touch Controls Hidden' : 'টাচ কন্ট্রোল লুকানো হয়েছে')
+          : (this.state.lang === 'en' ? 'Touch Controls Visible' : 'টাচ কন্ট্রোল দেখানো হয়েছে'));
       }
     });
 
@@ -465,7 +702,8 @@ export class Game {
     this.checkAchievements();
 
     sound.playCatchFanfare('rare');
-    this.showToast(`জালে ধরা পড়ল: ${summaryText.join(', ')}!`, 'success');
+    const isEn = this.state.lang === 'en';
+    this.showToast(isEn ? `Caught in net: ${summaryText.join(', ')}!` : `জালে ধরা পড়ল: ${summaryText.join(', ')}!`, 'success');
     this.updateHud();
     this.saveState();
   }
@@ -490,7 +728,8 @@ export class Game {
     this.state.taka += total;
     this.state.inventory = [];
     sound.playCoinSound();
-    this.showToast(`সব মাছ বিক্রি সম্পন্ন! মোট আয়: ৳ ${total}`, 'success');
+    const isEn = this.state.lang === 'en';
+    this.showToast(isEn ? `All fish sold! Total earnings: ৳ ${total}` : `সব মাছ বিক্রি সম্পন্ন! মোট আয়: ৳ ${total}`, 'success');
     this.updateHud();
     this.renderMarketModal();
     this.saveState();
@@ -506,7 +745,7 @@ export class Game {
       if (rand < 0.22) {
         this.state.weather = 'monsoon';
         sound.setWeatherAmbience('monsoon');
-        this.showToast('মেঘ ডেকে উঠল! পদ্মা ও হাওড়ে বর্ষা নামল (Monsoon Thunderstorm!)');
+        this.showToast(this.state.lang === 'en' ? 'Monsoon Thunderstorm rolling in! Higher bite rates!' : 'মেঘ ডেকে উঠল! পদ্মা ও হাওড়ে বর্ষা নামল (Monsoon Thunderstorm!)');
       } else if (rand < 0.45) {
         this.state.weather = 'rain';
         sound.setWeatherAmbience('rain');
@@ -696,7 +935,12 @@ export class Game {
     this.state.stats.dolphinBlessings = (this.state.stats.dolphinBlessings || 0) + 1;
     this.checkAchievements();
     sound.playCatchFanfare('legendary');
-    this.showToast('🐬 পদ্মার শুশুক ভেসে উঠেছে! নদী আশীর্বাদ পেয়েছে (+50% Fast Bite for 2 mins)!', 'success');
+    this.showToast(
+      this.state.lang === 'en'
+        ? '🐬 River Dolphin surfaced! Water blessed (+50% Fast Bite for 2 mins)!'
+        : '🐬 পদ্মার শুশুক ভেসে উঠেছে! নদী আশীর্বাদ পেয়েছে (+50% Fast Bite for 2 mins)!',
+      'success'
+    );
   }
 
   // ==========================================
@@ -761,7 +1005,12 @@ export class Game {
     this.spawnFish();
     this.spawnFish();
 
-    this.showToast('🦦 পোষা ভোঁদড় জলে নেমে মাছ তাড়া করে আপনার দিকে নিয়ে আসছে!', 'info');
+    this.showToast(
+      this.state.lang === 'en'
+        ? '🦦 Trained fishing otter jumped in, driving fish towards you!'
+        : '🦦 পোষা ভোঁদড় জলে নেমে মাছ তাড়া করে আপনার দিকে নিয়ে আসছে!',
+      'info'
+    );
   }
 
   triggerTigerRoar() {
@@ -778,7 +1027,12 @@ export class Game {
       setTimeout(() => bezel.classList.remove('camera-shake'), 650);
     }
 
-    this.showToast('🐅 সুন্দরবনের গহীনে রয়েল বেঙ্গল টাইগারের গর্জন! বনের বাতাস স্তব্ধ...', 'warning');
+    this.showToast(
+      this.state.lang === 'en'
+        ? '🐅 Royal Bengal Tiger roar echoes through Sundarbans! The wild falls silent...'
+        : '🐅 সুন্দরবনের গহীনে রয়েল বেঙ্গল টাইগারের গর্জন! বনের বাতাস স্তব্ধ...',
+      'warning'
+    );
   }
 
   // ==========================================
@@ -815,7 +1069,9 @@ export class Game {
         this.state.taka += ach.rewardTaka;
         newUnlock = true;
         sound.playAchievementFanfare();
-        this.showToast(`🏆 নতুন অর্জন: ${ach.titleBn}! (+৳ ${ach.rewardTaka})`, 'success');
+        const isEn = this.state.lang === 'en';
+        const achTitle = isEn ? ach.titleEn : ach.titleBn;
+        this.showToast(isEn ? `🏆 New Achievement: ${achTitle}! (+৳ ${ach.rewardTaka})` : `🏆 নতুন অর্জন: ${achTitle}! (+৳ ${ach.rewardTaka})`, 'success');
         this.saveState();
       }
     });
@@ -831,8 +1087,10 @@ export class Game {
     const titleDisplay = document.getElementById('modalEquippedTitleDisplay');
     if (!container) return;
 
+    const isEn = this.state.lang === 'en';
+
     if (titleDisplay) {
-      titleDisplay.textContent = this.state.equippedTitle || 'গ্রামের শিকারী (Village Angler)';
+      titleDisplay.textContent = this.getEquippedTitle(isEn ? 'en' : 'bn');
     }
 
     container.innerHTML = '';
@@ -841,7 +1099,7 @@ export class Game {
     ACHIEVEMENTS.forEach((ach) => {
       const isUnlocked = this.state.unlockedAchievements.includes(ach.id);
       if (isUnlocked) unlockedCount++;
-      const isEquipped = this.state.equippedTitle === ach.titleReward;
+      const isEquipped = this.state.equippedTitle === ach.titleReward || this.state.equippedTitle === ach.titleRewardEn || this.state.equippedTitle === ach.titleRewardBn;
 
       const card = document.createElement('div');
       card.className = `achievement-card ${isUnlocked ? 'unlocked' : 'locked'}`;
@@ -849,22 +1107,22 @@ export class Game {
         <div class="achievement-card-header">
           <div class="achievement-icon">${ach.icon}</div>
           <div class="achievement-title-area">
-            <h4>${ach.titleBn}</h4>
-            <div class="sub">${ach.titleEn}</div>
+            <h4>${isEn ? ach.titleEn : ach.titleBn}</h4>
+            ${isEn ? '' : `<div class="sub">${ach.titleEn}</div>`}
           </div>
         </div>
-        <p class="achievement-desc">${ach.descBn}</p>
+        <p class="achievement-desc">${isEn ? (ach.descEn || ach.descBn) : ach.descBn}</p>
         <div style="font-size: 0.74rem; color: #f59e0b; margin-bottom: 8px;">
-          খেতাব: <strong>${ach.titleReward}</strong>
+          ${isEn ? 'Title:' : 'খেতাব:'} <strong>${isEn ? (ach.titleRewardEn || ach.titleReward) : (ach.titleRewardBn || ach.titleReward)}</strong>
         </div>
         <div class="achievement-footer">
-          <span class="achievement-reward">পুরস্কার: +৳ ${ach.rewardTaka}</span>
+          <span class="achievement-reward">${isEn ? 'Reward: +৳' : 'পুরস্কার: +৳'} ${ach.rewardTaka}</span>
           ${
             isUnlocked
               ? `<button class="btn-equip-title ${isEquipped ? 'equipped' : ''}" data-title="${ach.titleReward}">
-                  ${isEquipped ? '✓ সজ্জিত (Active)' : 'খেতাব নিন (Equip)'}
+                  ${isEquipped ? (isEn ? '✓ Equipped' : '✓ সজ্জিত') : (isEn ? 'Equip Title' : 'খেতাব নিন')}
                  </button>`
-              : '<span style="font-size: 0.72rem; color: #94a3b8;">🔒 লক করা</span>'
+              : `<span style="font-size: 0.72rem; color: #94a3b8;">${isEn ? '🔒 Locked' : '🔒 লক করা'}</span>`
           }
         </div>
       `;
@@ -873,7 +1131,8 @@ export class Game {
         const title = e.currentTarget.dataset.title;
         this.state.equippedTitle = title;
         sound.playCoinSound();
-        this.showToast(`খেতাব সজ্জিত: ${title}`, 'success');
+        const displayTitle = isEn ? (ach.titleRewardEn || title) : (ach.titleRewardBn || title);
+        this.showToast(isEn ? `Title Equipped: ${displayTitle}` : `খেতাব সজ্জিত: ${displayTitle}`, 'success');
         this.updateHud();
         this.renderAchievementsModal();
         this.saveState();
@@ -883,7 +1142,9 @@ export class Game {
     });
 
     if (statsEl) {
-      statsEl.textContent = `সম্পন্ন: ${unlockedCount} / ${ACHIEVEMENTS.length} অর্জন আনলক (${Math.round((unlockedCount / ACHIEVEMENTS.length) * 100)}%)`;
+      statsEl.textContent = isEn
+        ? `Completed: ${unlockedCount} / ${ACHIEVEMENTS.length} achievements unlocked (${Math.round((unlockedCount / ACHIEVEMENTS.length) * 100)}%)`
+        : `সম্পন্ন: ${unlockedCount} / ${ACHIEVEMENTS.length} অর্জন আনলক (${Math.round((unlockedCount / ACHIEVEMENTS.length) * 100)}%)`;
     }
   }
 
@@ -891,10 +1152,11 @@ export class Game {
     sound.ensureContext();
     const track = sound.nextRadioTrack();
     const radioNameEl = document.getElementById('radioTrackName');
+    const isEn = this.state.lang === 'en';
     if (radioNameEl) {
-      radioNameEl.textContent = track.nameBn;
+      radioNameEl.textContent = isEn ? track.nameEn : track.nameBn;
     }
-    this.showToast(`📻 রেডিও চ্যানেল: ${track.nameBn} (${track.nameEn})`, 'info');
+    this.showToast(isEn ? `📻 Radio Station: ${track.fullNameEn || track.nameEn}` : `📻 রেডিও চ্যানেল: ${track.fullNameBn || track.nameBn}`, 'info');
   }
 
   // ==========================================
@@ -910,6 +1172,8 @@ export class Game {
         if (e.code === 'Space' || e.code === 'Enter') {
           e.preventDefault();
           this.closeStartMenu();
+        } else if (e.code === 'KeyL') {
+          this.toggleLanguage();
         }
         return;
       }
@@ -948,6 +1212,9 @@ export class Game {
         } else if (e.code === 'KeyT') {
           e.preventDefault();
           this.openModal('achievementsModal');
+        } else if (e.code === 'KeyL') {
+          e.preventDefault();
+          this.toggleLanguage();
         }
         // Block all other gameplay keys while ANY modal is open
         return;
@@ -958,6 +1225,8 @@ export class Game {
       if (e.code === 'Space') {
         e.preventDefault();
         this.handlePrimaryActionDown();
+      } else if (e.code === 'KeyL') {
+        this.toggleLanguage();
       } else if (e.code === 'KeyQ') {
         this.cycleTool();
       } else if (e.code === 'Digit1') {
@@ -1266,7 +1535,7 @@ export class Game {
   switchTool(toolId) {
     // Check if tool is allowed in current location
     if (!this.state.location.allowedTools.includes(toolId)) {
-      this.showToast(`এই স্থানে ${toolId.toUpperCase()} ব্যবহার করা যায় না! (Not allowed here)`);
+      this.showToast(this.state.lang === 'en' ? `${toolId.toUpperCase()} cannot be used here!` : `এই স্থানে ${toolId.toUpperCase()} ব্যবহার করা যায় না! (Not allowed here)`);
       return;
     }
     this.minigames.cancelAllTimers();
@@ -1288,11 +1557,12 @@ export class Game {
 
   updateToolDock() {
     const { currentTool } = this.state;
+    const toolDict = I18N[this.state.lang || 'bn'].tools;
     const info = {
-      borshi: { icon: '🎣', name: 'ছিপ (Borshi Rod)', hint: 'টোপ ফেলে বড়শি শিকার • [১]' },
-      jhal: { icon: '🕸️', name: 'খেপ জাল (Cast Net)', hint: 'ঝাঁকে জাল নিক্ষেপ • [২]' },
-      pollo: { icon: '🧺', name: 'পলো (Bamboo Basket)', hint: 'কাদায় পলো চাপা শিকার • [৩]' }
-    }[currentTool] || { icon: '🎣', name: 'ছিপ (Borshi Rod)', hint: 'টোপ ফেলে বড়শি শিকার • [১]' };
+      borshi: { icon: '🎣', name: toolDict.borshi.name, hint: toolDict.borshi.hint },
+      jhal: { icon: '🕸️', name: toolDict.jhal.name, hint: toolDict.jhal.hint },
+      pollo: { icon: '🧺', name: toolDict.pollo.name, hint: toolDict.pollo.hint }
+    }[currentTool] || { icon: '🎣', name: toolDict.borshi.name, hint: toolDict.borshi.hint };
 
     const iconEl = document.getElementById('toolCycleIcon');
     const nameEl = document.getElementById('toolCycleName');
@@ -1324,22 +1594,17 @@ export class Game {
     if (!actionBtn || !labelEl) return;
 
     const { currentTool } = this.state;
+    const labels = I18N[this.state.lang || 'bn'].actionLabels;
+
     if (currentTool === 'borshi') {
       const b = this.state.borshi.state;
-      if (b === 'idle') labelEl.textContent = 'CAST (ছিপ ফেলুন)';
-      else if (b === 'charging') labelEl.textContent = 'RELEASE (ছাড়ুন)';
-      else if (b === 'cast') labelEl.textContent = 'WAITING... (অপেক্ষা)';
-      else if (b === 'nibble') labelEl.textContent = 'HOOK! (টান দিন!)';
-      else if (b === 'fighting') labelEl.textContent = 'REEL! (ঘোরান!)';
+      labelEl.innerHTML = (labels.borshi[b] || labels.borshi.idle).replace('\n', '<br>');
     } else if (currentTool === 'jhal') {
       const j = this.state.jhal.state;
-      if (j === 'idle') labelEl.textContent = 'THROW NET (খেপ জাল)';
-      else if (j === 'aiming') labelEl.textContent = 'RELEASE (জাল নিক্ষেপ)';
-      else labelEl.textContent = 'HAULING (টানুন)';
+      labelEl.innerHTML = (labels.jhal[j] || labels.jhal.idle).replace('\n', '<br>');
     } else if (currentTool === 'pollo') {
       const p = this.state.pollo.state;
-      if (p === 'wading') labelEl.textContent = 'SLAM POLLO (পলো ফেলুন)';
-      else if (p === 'trapped') labelEl.textContent = 'GRAB FISH! (মাছ ধরুন!)';
+      labelEl.innerHTML = (labels.pollo[p] || labels.pollo.wading).replace('\n', '<br>');
     }
   }
 
@@ -1489,6 +1754,14 @@ export class Game {
     document.getElementById('fullscreenToggleBtn')?.addEventListener('click', () => {
       this.toggleFullscreen();
     });
+
+    // Language toggle buttons in HUD and Pause Modal
+    document.getElementById('hudLangToggleBtn')?.addEventListener('click', () => {
+      this.toggleLanguage();
+    });
+    document.getElementById('pauseLangToggleBtn')?.addEventListener('click', () => {
+      this.toggleLanguage();
+    });
   }
 
   toggleFullscreen() {
@@ -1496,10 +1769,10 @@ export class Game {
     sound.playUiClick();
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
-      this.showToast('⛶ পূর্ণপর্দা মোড চালু (Fullscreen On)');
+      this.showToast(this.state.lang === 'en' ? '⛶ Fullscreen Mode On' : '⛶ পূর্ণপর্দা মোড চালু (Fullscreen On)');
     } else {
       document.exitFullscreen().catch(() => {});
-      this.showToast('পূর্ণপর্দা মোড বন্ধ (Fullscreen Off)');
+      this.showToast(this.state.lang === 'en' ? 'Fullscreen Mode Off' : 'পূর্ণপর্দা মোড বন্ধ (Fullscreen Off)');
     }
   }
 
@@ -1513,22 +1786,23 @@ export class Game {
 
     if (this.isPaused) {
       if (pauseModal) {
+        const isEn = this.state.lang === 'en';
         const locEl = document.getElementById('pauseLocationName');
         const takaEl = document.getElementById('pauseTakaVal');
         const countEl = document.getElementById('pauseFishCount');
         const weatherEl = document.getElementById('pauseWeatherText');
 
-        if (locEl) locEl.textContent = `${this.state.location.nameBn} • [${this.state.equippedTitle || 'গ্রামের শিকারী'}]`;
+        if (locEl) locEl.textContent = `${isEn ? this.state.location.name : this.state.location.nameBn} • [${this.getEquippedTitle(isEn ? 'en' : 'bn')}]`;
         if (takaEl) takaEl.textContent = `৳ ${this.state.taka.toLocaleString()}`;
-        if (countEl) countEl.textContent = `${this.state.inventory.length} Fish`;
+        if (countEl) countEl.textContent = `${this.state.inventory.length} ${this.t('hudFishUnit')}`;
         if (weatherEl) weatherEl.textContent = `${this.renderer.getTimeName().en} / ${this.state.weather.toUpperCase()}`;
 
         pauseModal.classList.remove('hidden');
       }
-      if (pauseBtn) pauseBtn.textContent = '▶️ চালিয়ে যান (Resume)';
+      if (pauseBtn) pauseBtn.textContent = this.t('pauseResumeBtn');
     } else {
       if (pauseModal) pauseModal.classList.add('hidden');
-      if (pauseBtn) pauseBtn.textContent = '⏸️ বিরতি (Pause)';
+      if (pauseBtn) pauseBtn.textContent = this.t('hudPauseBtn');
       this.lastTime = performance.now();
     }
   }
@@ -1547,42 +1821,40 @@ export class Game {
       this.switchTool(loc.allowedTools[0]);
     }
 
-    this.showToast(`অবস্থান পরিবর্তন: ${loc.nameBn} (${loc.name})`);
+    const isEn = this.state.lang === 'en';
+    this.showToast(isEn ? `Location: ${loc.name}` : `অবস্থান পরিবর্তন: ${loc.nameBn}`);
     this.updateHud();
     this.saveState();
   }
 
   updateHud() {
+    const isEn = this.state.lang === 'en';
     const takaEl = document.getElementById('hudTaka');
     if (takaEl) takaEl.textContent = `৳ ${this.state.taka.toLocaleString()}`;
 
     const catchCountEl = document.getElementById('hudCatchCount');
-    if (catchCountEl) catchCountEl.textContent = `${this.state.inventory.length} Fish`;
+    if (catchCountEl) catchCountEl.textContent = `${this.state.inventory.length} ${this.t('hudFishUnit')}`;
 
     const weatherEl = document.getElementById('hudWeather');
     if (weatherEl) {
-      const wMap = {
-        clear: '☀️ Clear (রৌদ্রোজ্জ্বল)',
-        rain: '🌧️ Monsoon Rain (বৃষ্টি)',
-        monsoon: '⛈️ Heavy Storm (বজ্রঝড়)'
-      };
-      weatherEl.textContent = wMap[this.state.weather] || '☀️ Clear';
+      const weatherDict = this.t('weather') || {};
+      weatherEl.textContent = weatherDict[this.state.weather] || '☀️ Clear';
     }
 
     const timeEl = document.getElementById('hudTime');
     if (timeEl) {
       const t = this.renderer.getTimeName();
-      timeEl.textContent = t.en;
+      timeEl.textContent = isEn ? t.en : t.bn;
     }
 
     const titleBadgeEl = document.getElementById('playerEquippedTitleBadge');
-    if (titleBadgeEl) titleBadgeEl.textContent = this.state.equippedTitle || 'গ্রামের শিকারী';
+    if (titleBadgeEl) titleBadgeEl.textContent = this.getEquippedTitle(isEn ? 'en' : 'bn');
 
     const baitCountEl = document.getElementById('hudBaitCount');
     if (baitCountEl) {
       const currentBaitId = this.state.selectedBait;
       const count = this.state.baitInventory[currentBaitId] || 0;
-      baitCountEl.textContent = `Bait: ${count} left`;
+      baitCountEl.textContent = isEn ? `Bait: ${count} left` : `টোপ: ${count} টি বাকি`;
     }
 
     const dolphinBuffEl = document.getElementById('hudDolphinBuff');
@@ -1590,7 +1862,7 @@ export class Game {
       if (this.state.dolphinBuffTimer > 0) {
         const mins = Math.floor(this.state.dolphinBuffTimer / 60);
         const secs = Math.floor(this.state.dolphinBuffTimer % 60).toString().padStart(2, '0');
-        dolphinBuffEl.textContent = `🐬 শুশুকের আশীর্বাদ: ${mins}:${secs} (+50% Bite)`;
+        dolphinBuffEl.textContent = this.t('hudDolphinBuff', mins, secs);
         dolphinBuffEl.classList.remove('hidden');
       } else {
         dolphinBuffEl.classList.add('hidden');
@@ -1662,15 +1934,24 @@ export class Game {
   showCatchModal(item) {
     const modal = document.getElementById('trophyModal');
     if (!modal) return;
+    const isEn = this.state.lang === 'en';
 
     // Pause game simulation while viewing catch trophy
     this.isPaused = true;
 
-    document.getElementById('trophyFishName').textContent = `${item.nameBn} (${item.name})`;
+    const titleEl = modal.querySelector('.modal-content > div:first-child');
+    if (titleEl) titleEl.textContent = this.t('trophyHeader');
+
+    document.getElementById('trophyFishName').textContent = isEn
+      ? `${item.name} (${item.nameBn})`
+      : `${item.nameBn} (${item.name})`;
     document.getElementById('trophyWeight').textContent = `${item.weight} kg`;
     document.getElementById('trophyValue').textContent = `৳ ${item.value}`;
     document.getElementById('trophyRarity').textContent = item.rarity;
     document.getElementById('trophyRarity').className = `badge badge-${item.rarityClass}`;
+
+    const keepBtn = document.getElementById('closeTrophyBtn');
+    if (keepBtn) keepBtn.textContent = this.t('trophyKeepBtn');
 
     const avatarEl = modal.querySelector('.trophy-fish-avatar');
     if (avatarEl) {
@@ -1741,6 +2022,7 @@ export class Game {
     const container = document.getElementById('marketItemsContainer');
     const totalEl = document.getElementById('marketTotalValue');
     if (!container) return;
+    const isEn = this.state.lang === 'en';
 
     container.innerHTML = '';
     let total = 0;
@@ -1748,8 +2030,8 @@ export class Game {
     if (this.state.inventory.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <p>ঝাঁকা ফাঁকা! এখনো কোনো মাছ ধরা পড়েনি।</p>
-          <p class="sub">No fresh catch in your basket yet. Cast your line in the water!</p>
+          <p>${this.t('marketEmpty')}</p>
+          <p class="sub">${this.t('marketEmptySub')}</p>
         </div>`;
       if (totalEl) totalEl.textContent = '৳ 0';
       return;
@@ -1759,18 +2041,19 @@ export class Game {
       total += item.value;
       const card = document.createElement('div');
       card.className = `market-card border-${item.rarityClass}`;
+      const titleStr = isEn ? item.name : `${item.nameBn} <span class="en-name">(${item.name})</span>`;
       card.innerHTML = `
         <div style="display: flex; align-items: center;">
           <img src="${getFishSpriteDataUrl(item.speciesId, false, 2)}" class="pixel-fish-thumbnail" alt="${item.name}">
           <div class="market-fish-info">
-            <h4>${item.nameBn} <span class="en-name">${item.name}</span></h4>
+            <h4>${titleStr}</h4>
             <span class="badge badge-${item.rarityClass}">${item.rarity}</span>
-            <p class="specs">ওজন: <strong>${item.weight} kg</strong> | ধরা হয়েছে: ${item.time}</p>
+            <p class="specs">${this.t('marketWeight')}<strong>${item.weight} kg</strong> | ${this.t('marketCaughtAt')}${item.time}</p>
           </div>
         </div>
         <div class="market-price-col">
           <div class="price-tag">৳ ${item.value}</div>
-          <button class="btn btn-sell-single" data-index="${index}">বিক্রি (Sell)</button>
+          <button class="btn btn-sell-single" data-index="${index}">${this.t('marketSellSingle')} (৳ ${item.value})</button>
         </div>
       `;
       card.querySelector('.btn-sell-single').addEventListener('click', () => {
@@ -1787,6 +2070,7 @@ export class Game {
     const statsEl = document.getElementById('albumCompletionStats');
     if (!container) return;
 
+    const isEn = this.state.lang === 'en';
     container.innerHTML = '';
     let caughtTotal = 0;
 
@@ -1805,22 +2089,21 @@ export class Game {
           <img src="${spriteUrl}" alt="${species.name}" class="pixel-fish-sprite">
           ${!isCaught ? '<div class="lock-question-overlay">?</div>' : ''}
         </div>
-        <h4 class="album-title">${isCaught ? species.nameBn : 'অজানা মাছ (Undiscovered)'}</h4>
-        <div class="album-sub">${species.name}</div>
-        <div class="album-latin">${species.scientific}</div>
+        <h4 class="album-title">${isCaught ? (isEn ? species.name : species.nameBn) : this.t('albumUndiscovered')}</h4>
+        ${isEn ? `<div class="album-latin">${species.scientific}</div>` : `<div class="album-sub">${species.name}</div><div class="album-latin">${species.scientific}</div>`}
         ${
           isCaught
             ? `
           <div class="album-records">
-            <p>ধরা হয়েছে: <strong>${record.count} বার</strong></p>
-            <p>সর্বোচ্চ ওজন: <strong>${record.maxWeight} kg</strong></p>
+            <p>${this.t('albumCaughtCount', record.count)}</p>
+            <p>${this.t('albumMaxWeight', record.maxWeight)}</p>
             <p class="album-trivia"><em>"${species.trivia}"</em></p>
           </div>
         `
             : `
           <div class="album-locked-hint">
-            <p>আবাসস্থল: ${species.habitats.map((h) => LOCATIONS[h.toUpperCase()]?.nameBn || h).join(', ')}</p>
-            <p>পানিতে ছিপ বা জাল ফেলে আবিষ্কার করুন!</p>
+            <p>${this.t('albumHabitat')}${species.habitats.map((h) => (isEn ? LOCATIONS[h.toUpperCase()]?.name : LOCATIONS[h.toUpperCase()]?.nameBn) || h).join(', ')}</p>
+            <p>${this.t('albumLockedHint')}</p>
           </div>
         `
         }
@@ -1829,7 +2112,7 @@ export class Game {
     });
 
     if (statsEl) {
-      statsEl.textContent = `মোট প্রজাতি সম্পন্ন: ${caughtTotal} / ${FISH_SPECIES.length} (${Math.round((caughtTotal / FISH_SPECIES.length) * 100)}%)`;
+      statsEl.textContent = this.t('albumStats', caughtTotal, FISH_SPECIES.length, Math.round((caughtTotal / FISH_SPECIES.length) * 100));
     }
   }
 
@@ -1837,11 +2120,12 @@ export class Game {
     const container = document.getElementById('shopItemsContainer');
     if (!container) return;
     container.innerHTML = '';
+    const isEn = this.state.lang === 'en';
 
     // 1. Bait Purchases
     const baitHeader = document.createElement('h3');
     baitHeader.className = 'shop-section-header';
-    baitHeader.textContent = 'মাছের পছন্দের টোপ (Fresh Natural Baits)';
+    baitHeader.textContent = this.t('shopBaitHeader');
     container.appendChild(baitHeader);
 
     const baitGrid = document.createElement('div');
@@ -1853,12 +2137,12 @@ export class Game {
       const count = this.state.baitInventory[bait.id] || 0;
       card.innerHTML = `
         <div class="shop-icon">${bait.icon}</div>
-        <h4>${bait.name}</h4>
+        <h4>${isEn ? bait.name : (bait.nameBn || bait.name)}</h4>
         <p class="desc">${bait.desc}</p>
-        <div class="owned-tag">মজুদ আছে: ${count} টি</div>
+        <div class="owned-tag">${this.t('shopOwnedQty', count)}</div>
         <div class="shop-footer">
-          <span class="price-val">৳ ${bait.cost} / ৫টি</span>
-          <button class="btn btn-buy" data-bait="${bait.id}">কিনুন (Buy 5)</button>
+          <span class="price-val">৳ ${bait.cost} ${this.t('shopPer5')}</span>
+          <button class="btn btn-buy" data-bait="${bait.id}">${this.t('shopBuy5')}</button>
         </div>
       `;
       card.querySelector('.btn-buy').addEventListener('click', () => {
@@ -1866,12 +2150,13 @@ export class Game {
           this.state.taka -= bait.cost;
           this.state.baitInventory[bait.id] = (this.state.baitInventory[bait.id] || 0) + 5;
           sound.playCoinSound();
-          this.showToast(`${bait.nameBn} কেনা হয়েছে (+5)!`, 'success');
+          const baitName = isEn ? bait.name : (bait.nameBn || bait.name);
+          this.showToast(isEn ? `${baitName} purchased (+5)!` : `${baitName} কেনা হয়েছে (+5)!`, 'success');
           this.updateHud();
           this.renderShopModal();
           this.saveState();
         } else {
-          this.showToast('টাকা পর্যাপ্ত নয়! মাছ বিক্রি করে আয় করুন। (Not enough Taka)', 'warning');
+          this.showToast(isEn ? 'Not enough Taka! Sell fish at the market.' : 'টাকা পর্যাপ্ত নয়! মাছ বিক্রি করে আয় করুন। (Not enough Taka)', 'warning');
         }
       });
       baitGrid.appendChild(card);
@@ -1881,7 +2166,7 @@ export class Game {
     // 2. Rod Upgrades
     const rodHeader = document.createElement('h3');
     rodHeader.className = 'shop-section-header';
-    rodHeader.textContent = 'ছিপ ও আধুনিক রড (Fishing Rods & Chhip)';
+    rodHeader.textContent = this.t('shopRodHeader');
     container.appendChild(rodHeader);
 
     const rodGrid = document.createElement('div');
@@ -1893,15 +2178,15 @@ export class Game {
       card.className = `shop-card ${isOwned ? 'equipped' : ''}`;
       card.innerHTML = `
         <div class="shop-icon">🎣</div>
-        <h4>${rod.name}</h4>
+        <h4>${isEn ? rod.name : (rod.nameBn || rod.name)}</h4>
         <p class="desc">${rod.desc}</p>
-        <p class="stats">টান শক্তি: <strong>x${rod.power}</strong> | লক্ষ্য স্থিরতা: <strong>${Math.round(rod.sweetSpot * 100)}%</strong></p>
+        <p class="stats">${this.t('shopPower')}<strong>x${rod.power}</strong> | ${this.t('shopAccuracy')}<strong>${Math.round(rod.sweetSpot * 100)}%</strong></p>
         <div class="shop-footer">
-          <span class="price-val">${isOwned ? 'সজ্জিত (Equipped)' : rod.price === 0 ? 'ফ্রি' : `৳ ${rod.price}`}</span>
+          <span class="price-val">${isOwned ? this.t('shopEquipped') : rod.price === 0 ? this.t('shopFree') : `৳ ${rod.price}`}</span>
           ${
             !isOwned
-              ? `<button class="btn btn-buy-rod" data-id="${rod.id}">আপগ্রেড (Upgrade)</button>`
-              : '<span class="badge badge-common">Active</span>'
+              ? `<button class="btn btn-buy-rod" data-id="${rod.id}">${this.t('shopUpgrade')}</button>`
+              : `<span class="badge badge-common">${this.t('shopActive')}</span>`
           }
         </div>
       `;
@@ -1910,12 +2195,13 @@ export class Game {
           this.state.taka -= rod.price;
           this.state.upgrades.rod = rod.id;
           sound.playCoinSound();
-          this.showToast(`${rod.name} আপগ্রেড সম্পন্ন!`, 'success');
+          const rodName = isEn ? rod.name : (rod.nameBn || rod.name);
+          this.showToast(isEn ? `${rodName} upgraded!` : `${rodName} আপগ্রেড সম্পন্ন!`, 'success');
           this.updateHud();
           this.renderShopModal();
           this.saveState();
         } else {
-          this.showToast('টাকা পর্যাপ্ত নয়! (Not enough Taka)', 'warning');
+          this.showToast(isEn ? 'Not enough Taka!' : 'টাকা পর্যাপ্ত নয়!', 'warning');
         }
       });
       rodGrid.appendChild(card);
@@ -1925,7 +2211,7 @@ export class Game {
     // 3. Cast Net Upgrades
     const netHeader = document.createElement('h3');
     netHeader.className = 'shop-section-header';
-    netHeader.textContent = 'খেপ জাল ও মহাজাল (Cast Net Gear)';
+    netHeader.textContent = this.t('shopNetHeader');
     container.appendChild(netHeader);
 
     const netGrid = document.createElement('div');
@@ -1937,15 +2223,15 @@ export class Game {
       card.className = `shop-card ${isOwned ? 'equipped' : ''}`;
       card.innerHTML = `
         <div class="shop-icon">🕸️</div>
-        <h4>${net.name}</h4>
+        <h4>${isEn ? net.name : (net.nameBn || net.name)}</h4>
         <p class="desc">${net.desc}</p>
-        <p class="stats">নিক্ষেপ ব্যাসার্ধ: <strong>${net.radius}px</strong></p>
+        <p class="stats">${this.t('shopRadius')}<strong>${net.radius}px</strong></p>
         <div class="shop-footer">
-          <span class="price-val">${isOwned ? 'সজ্জিত (Equipped)' : `৳ ${net.price}`}</span>
+          <span class="price-val">${isOwned ? this.t('shopEquipped') : `৳ ${net.price}`}</span>
           ${
             !isOwned
-              ? `<button class="btn btn-buy-net" data-id="${net.id}">কিনুন (Upgrade)</button>`
-              : '<span class="badge badge-common">Active</span>'
+              ? `<button class="btn btn-buy-net" data-id="${net.id}">${this.t('shopUpgrade')}</button>`
+              : `<span class="badge badge-common">${this.t('shopActive')}</span>`
           }
         </div>
       `;
@@ -1954,12 +2240,13 @@ export class Game {
           this.state.taka -= net.price;
           this.state.upgrades.net = net.id;
           sound.playCoinSound();
-          this.showToast(`${net.name} কেনা সম্পন্ন!`, 'success');
+          const netName = isEn ? net.name : (net.nameBn || net.name);
+          this.showToast(isEn ? `${netName} purchased!` : `${netName} কেনা সম্পন্ন!`, 'success');
           this.updateHud();
           this.renderShopModal();
           this.saveState();
         } else {
-          this.showToast('টাকা পর্যাপ্ত নয়!', 'warning');
+          this.showToast(isEn ? 'Not enough Taka!' : 'টাকা পর্যাপ্ত নয়!', 'warning');
         }
       });
       netGrid.appendChild(card);
@@ -1969,7 +2256,7 @@ export class Game {
     // 4. Boat Unlock (Dinghi Nouka)
     const boatHeader = document.createElement('h3');
     boatHeader.className = 'shop-section-header';
-    boatHeader.textContent = 'ডিঙি নৌকা ও জলযান (Boats & Transport)';
+    boatHeader.textContent = this.t('shopBoatHeader');
     container.appendChild(boatHeader);
 
     const boatGrid = document.createElement('div');
@@ -1981,13 +2268,13 @@ export class Game {
     boatCard.className = `shop-card ${boatOwned ? 'equipped' : ''}`;
     boatCard.innerHTML = `
       <div class="shop-icon">⛵</div>
-      <h4>${dinghi.name}</h4>
+      <h4>${isEn ? dinghi.name : (dinghi.nameBn || dinghi.name)}</h4>
       <p class="desc">${dinghi.desc}</p>
       <div class="shop-footer">
-        <span class="price-val">${boatOwned ? 'মালিকানা আছে (Owned)' : `৳ ${dinghi.price}`}</span>
+        <span class="price-val">${boatOwned ? this.t('shopOwnedBoat') : `৳ ${dinghi.price}`}</span>
         ${
           !boatOwned
-            ? `<button class="btn btn-buy-boat">নৌকা কিনুন (Unlock Boat)</button>`
+            ? `<button class="btn btn-buy-boat">${this.t('shopBuyBoat')}</button>`
             : '<span class="badge badge-legendary">Unlocked</span>'
         }
       </div>
@@ -1997,12 +2284,17 @@ export class Game {
         this.state.taka -= dinghi.price;
         this.state.upgrades.boatUnlocked = true;
         sound.playCatchFanfare('legendary');
-        this.showToast('ডিঙি নৌকা আনলক হয়েছে! পদ্মার গভীর জলে ইলিশের সন্ধান করুন!', 'success');
+        this.showToast(
+          isEn
+            ? 'Dinghi Boat Unlocked! Explore deep Padma waters for Royal Hilsa!'
+            : 'ডিঙি নৌকা আনলক হয়েছে! পদ্মার গভীর জলে ইলিশের সন্ধান করুন!',
+          'success'
+        );
         this.updateHud();
         this.renderShopModal();
         this.saveState();
       } else {
-        this.showToast('টাকা পর্যাপ্ত নয়! বড় মাছ ধরে জমিয়ে তুলুন।', 'warning');
+        this.showToast(isEn ? 'Not enough Taka! Catch and sell bigger fish.' : 'টাকা পর্যাপ্ত নয়! বড় মাছ ধরে জমিয়ে তুলুন।', 'warning');
       }
     });
     boatGrid.appendChild(boatCard);
@@ -2045,6 +2337,10 @@ export class Game {
 
   loadState() {
     try {
+      // Restore language preference first
+      const savedLang = localStorage.getItem('bangla_fishing_lang');
+      if (savedLang === 'en' || savedLang === 'bn') this.state.lang = savedLang;
+
       const raw = localStorage.getItem('bangla_fishing_save_v1');
       if (raw) {
         const data = JSON.parse(raw);
